@@ -1,0 +1,73 @@
+{
+  "name": "solidstore",
+  "version": "0.1.0",
+  "description": "Premium, minimal SolidJS port of the rich reactive store engine (full API parity, dramatically simpler reactivity)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./jsondb": {
+      "import": "./dist/jsondb.js",
+      "types": "./dist/jsondb.d.ts"
+    },
+    "./jsondb/*": {
+      "import": "./dist/jsondb/*.js",
+      "types": "./dist/jsondb/*.d.ts"
+    }
+  },
+  "sideEffects": [
+    "./dist/jsondb.js"
+  ],
+  "scripts": {
+    "build": "tsc && node scripts/fix-dist-esm-extensions.mjs",
+    "typecheck": "tsc --noEmit",
+    "prepack": "bun run build",
+    "test": "bun run test:types && bun run test:array-methods && bun run test:proxy-delete && bun run test:wakeup-batch && bun run test:select-observable && bun run test:nested-tree-batch && bun run test:nestable-cms && bun run test:store-component-flow && bun run test:store-board-wakeup && bun run test:deep-proxy-jsondb && bun run test:livequery && bun run test:bridge-contract",
+    "verify": "bunx tsx verify.ts",
+    "demo": "bunx tsx demo.ts",
+    "bench:recursive-models": "bun test/recursive-models-compare.ts",
+    "bench:native": "bun --conditions browser test/native-vs-store-bench.ts",
+    "test:types": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --skipLibCheck test/types-proxy-contract.ts",
+    "test:path-core": "bun test/path-core-parity.test.ts",
+    "test:path-utils-public": "bun test/path-utils-public-api.test.ts",
+    "test:array-methods": "bun --conditions browser test/array-methods-contract.test.ts",
+    "test:proxy-delete": "bun --conditions browser test/proxy-delete-semantics.test.ts",
+    "test:wakeup-batch": "bun --conditions browser test/wakeup-batch-reactivity.test.ts",
+    "test:select-observable": "bun --conditions browser test/select-observable-reactivity.test.ts",
+    "test:nested-tree-batch": "bun --conditions browser test/nested-tree-batch.test.ts",
+    "test:nestable-cms": "bun --conditions browser test/nestable-cms-modes.test.ts",
+    "test:store-component-flow": "bun --conditions browser test/store-component-flow.test.ts",
+    "test:store-board-wakeup": "bun --conditions browser test/store-board-wakeup-contract.test.ts",
+    "test:livequery": "bun --conditions browser test/livequery-jsondb.test.ts",
+    "test:deep-proxy-jsondb": "bun --conditions browser test/deep-proxy-jsondb-flow.test.ts",
+    "browser-demo:install": "bun install --cwd examples/browser-demo",
+    "browser-demo:dev": "cd examples/browser-demo && bun run dev",
+    "browser-demo:build": "bun --cwd examples/browser-demo run build",
+    "test:browser": "bun run browser-demo:install && bunx playwright test",
+    "test:browser:ui": "bun run browser-demo:install && bunx playwright test --ui",
+    "install:browsers": "bunx playwright install",
+    "test:bridge-contract": "bun --conditions browser test/jsondb-bridge-contract.test.ts"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.8.0",
+    "@synestiqx/jsondb": "^0.1.0"
+  },
+  "devDependencies": {
+    "@synestiqx/jsondb": "file:../jsondb_git",
+    "@playwright/test": "^1.60.0",
+    "solid-js": "^1.8.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  },
+  "keywords": [
+    "solidjs",
+    "reactive",
+    "store",
+    "proxy",
+    "jsondb"
+  ]
+}
