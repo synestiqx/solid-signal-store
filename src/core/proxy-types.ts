@@ -1,4 +1,31 @@
+import type { JsonMutationResult } from '@synestiqx/jsondb/data-engine';
+import type { SolidWakeMode } from '../proxy/solid-proxy';
+
 export type StorePrimitive = string | number | boolean | bigint | symbol | null | undefined;
+
+/** Proxy-graph sizes for devtools metrics (parity with Angular ProxyCacheManager.metricsSnapshot). */
+export interface SolidProxyMetrics {
+  signals: number;
+  proxies: number;
+  branchSubs: number;
+}
+
+/**
+ * Typed reactivity surface that the proxy manager installs on the store so the store
+ * can wake signals without `(this as any).__wakeX` casts. Mirrors Angular's
+ * ReactivityWakeupService contract: the store owns mutation commits, the proxy owns
+ * the signal graph, and this interface is the typed bridge between them.
+ */
+export interface SolidStoreReactivity {
+  wakeMutation(result: JsonMutationResult): void;
+  wakeMutations(results: JsonMutationResult[]): void;
+  wakeArraySplice(arrayPath: string, startIndex: number): void;
+  addBranchSub(path: string): void;
+  removeBranchSub(path: string): void;
+  wakeSignalPath(path: string, mode?: SolidWakeMode): void;
+  /** Snapshot of proxy-graph sizes for devtools PROXY_METRICS emission. */
+  getProxyMetrics?(): SolidProxyMetrics;
+}
 
 // opinia5: shared shapes for the $-namespace (subscriptions + reactive jsondb reads).
 export type StoreSubscription = { unsubscribe(): void; dispose(): void };

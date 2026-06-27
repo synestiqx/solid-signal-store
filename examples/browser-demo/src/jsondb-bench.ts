@@ -1,8 +1,8 @@
 import { createSolidStore } from 'store-solid';
 import 'store-solid/jsondb';
-import where from 'store-solid/jsondb/synced/operators/where';
-import update from 'store-solid/jsondb/synced/operators/update';
-import deleteKey from 'store-solid/jsondb/synced/operators/deleteKey';
+import where from '@synestiqx/jsondb/operators/where';
+import update from '@synestiqx/jsondb/operators/update';
+import deleteKey from '@synestiqx/jsondb/operators/deleteKey';
 
 type BenchResult = {
   name: string;

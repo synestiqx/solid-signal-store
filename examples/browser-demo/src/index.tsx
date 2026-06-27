@@ -1,20 +1,21 @@
 import { render } from 'solid-js/web';
-import { createMemo, createRoot, createSignal, For, onCleanup } from 'solid-js';
+import { createMemo, createRoot, createSignal, For, onCleanup, onMount, Show } from 'solid-js';
 import { createSolidStore, onSolidDevAction } from 'store-solid';
 import 'store-solid/jsondb';
 import { DemoLogger, createAddLog } from './logger';
+import Welcome from './Welcome';
 
 // Real imports via Vite alias 'store-solid' -> ../../src
-import where from 'store-solid/jsondb/synced/operators/where';
-import update from 'store-solid/jsondb/synced/operators/update';
-import insert from 'store-solid/jsondb/synced/operators/insert';
-import deleteKey from 'store-solid/jsondb/synced/operators/deleteKey';
-import mergeUpdate from 'store-solid/jsondb/synced/operators/mergeUpdate';
-import deleteElement from 'store-solid/jsondb/synced/operators/deleteElement';
-import copyTo from 'store-solid/jsondb/synced/operators/copyTo';
-import moveTo from 'store-solid/jsondb/synced/operators/moveTo';
-import moveToMatches from 'store-solid/jsondb/synced/operators/moveToMatches';
-import moveToAll from 'store-solid/jsondb/synced/operators/moveToAll';
+import where from '@synestiqx/jsondb/operators/where';
+import update from '@synestiqx/jsondb/operators/update';
+import insert from '@synestiqx/jsondb/operators/insert';
+import deleteKey from '@synestiqx/jsondb/operators/deleteKey';
+import mergeUpdate from '@synestiqx/jsondb/operators/mergeUpdate';
+import deleteElement from '@synestiqx/jsondb/operators/deleteElement';
+import copyTo from '@synestiqx/jsondb/operators/copyTo';
+import moveTo from '@synestiqx/jsondb/operators/moveTo';
+import moveToMatches from '@synestiqx/jsondb/operators/moveToMatches';
+import moveToAll from '@synestiqx/jsondb/operators/moveToAll';
 
 // --- Data generators (easy to tweak for visual perf comparison later) ---
 function makeFlat(n = 12) {
@@ -1454,25 +1455,45 @@ function SolidStoreBoardCell(props: { rowIndex: number; colIndex: number }) {
   );
 }
 
-function App() {
-  return (
-    <div>
-      <div class="header">
-        <h1>store-solid + jsondb</h1>
-        <span class="sub">browser verification • Vite + Solid • real bridge</span>
-      </div>
+// View switcher: 'welcome' (default landing) or 'demo' (existing jsondb suite)
+const [view, setView] = createSignal<'welcome' | 'demo'>('welcome');
 
-      <div class="suite-bar">
-        <button class="primary" onClick={runFullSuite} disabled={suiteDone()}>
-          ▶ Run Full Automated Suite
-        </button>
-        <button onClick={resetAll}>Reset Data</button>
-        <button onClick={runPureReactivityChecks}>▶ Pure Reactivity Checks</button>
-        <span class="stat">Suite step: {suiteStep()}/12 {suiteDone() ? '✓' : ''}</span>
-        <span style={{marginLeft:'auto', fontSize:'11px', color:'#64748b'}}>
-          Open DevTools → Console for full output. Screenshots + logs captured by Playwright.
-        </span>
-      </div>
+function App() {
+  // Listen for navigation events from Welcome tiles
+  onMount(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail === 'demo' || detail === 'nestable' || detail === 'bench' || detail === 'tests') {
+        setView('demo');
+      }
+    };
+    window.addEventListener('welcome-navigate', handler);
+    onCleanup(() => window.removeEventListener('welcome-navigate', handler));
+  });
+
+  return (
+    <>
+      <Show when={view() === 'welcome'} fallback={
+        <div>
+          <div class="header" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button onClick={() => setView('welcome')} style={{ background:'#334155', color:'#e2e8f0', border:'1px solid #475569', borderRadius:'6px', padding:'6px 12px', cursor:'pointer', fontSize:'13px' }}>
+              ← Back to Welcome
+            </button>
+            <h1>store-solid + jsondb</h1>
+            <span class="sub">browser verification • Vite + Solid • real bridge</span>
+          </div>
+
+          <div class="suite-bar">
+            <button class="primary" onClick={runFullSuite} disabled={suiteDone()}>
+              ▶ Run Full Automated Suite
+            </button>
+            <button onClick={resetAll}>Reset Data</button>
+            <button onClick={runPureReactivityChecks}>▶ Pure Reactivity Checks</button>
+            <span class="stat">Suite step: {suiteStep()}/12 {suiteDone() ? '✓' : ''}</span>
+            <span style={{marginLeft:'auto', fontSize:'11px', color:'#64748b'}}>
+              Open DevTools → Console for full output. Screenshots + logs captured by Playwright.
+            </span>
+          </div>
 
       {/* Pure Solid Reactivity Verification panel (whole engine focus - not only jsondb) */}
       <div class="pure-reactivity-panel" style={{margin: '12px 0', padding: '8px', border: '1px solid #334155', borderRadius: '4px', background: '#0f172a'}}>
@@ -1793,6 +1814,11 @@ function App() {
         store-solid (real src/ via alias) • Solid reactivity • jsondb bridge (applyPipelineMutation + fast paths)
       </div>
     </div>
+        }
+      >
+        <Welcome />
+      </Show>
+    </>
   );
 }
 

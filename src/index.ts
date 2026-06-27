@@ -17,7 +17,11 @@ export { createProjectionObservable } from './core/rx-interop';
 
 // Re-export key types for convenience
 export type { SolidStoreOptions, StoreDevToolsAction } from './core/SolidStore';
-export type { SolidStoreProxy, StoreArray, StoreLeaf } from './core/proxy-types';
+export type { SolidStoreProxy, StoreArray, StoreLeaf, SolidStoreReactivity, SolidProxyMetrics } from './core/proxy-types';
+
+// Devtools stream service (parity with Angular DevService)
+export { SolidDevService } from './core/dev-service';
+export type { DevStream, DevToolsEvent, ProxyMetrics } from './core/dev-service';
 
 // Internal utilities (for advanced use / future extensions)
 export * as InternalPath from './internal/path';

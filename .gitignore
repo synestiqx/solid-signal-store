@@ -1,3 +1,8 @@
 node_modules/
 dist/
 *.tsbuildinfo
+test-results/
+playwright-report/
+examples/browser-demo/node_modules/
+examples/browser-demo/dist/
+examples/browser-demo/package-lock.json

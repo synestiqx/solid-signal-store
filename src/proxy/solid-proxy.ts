@@ -5,6 +5,7 @@ import { enumerateAncestors, getParentPath, isValidPath, normalizePath } from '.
 import { ARRAY_METHODS } from '../array/solid-array';
 import { createMutationResult, type JsonMutationResult } from '@synestiqx/jsondb/data-engine';
 import { createProjectionObservable, type ProjectionObservableOptions } from '../core/rx-interop';
+import type { SolidStoreReactivity } from '../core/proxy-types';
 
 export interface StoreMutator {
   read(path: string): unknown;
@@ -14,6 +15,10 @@ export interface StoreMutator {
   prefetch(pathPrefix: string): void;
   emitDevAction(action: any): void;
   cleanupPath(path: string): void;
+  /** Typed reactivity binding (replaces `(this as any).__wakeX` casts). */
+  bindReactivity?(api: SolidStoreReactivity): void;
+  /** Typed wake-parents flag (read by the proxy manager's shouldWakeParents getter). */
+  _wakeParentsOnChange?: boolean;
 }
 
 export type SolidWakeMode = 'grained' | 'fine' | 'exact' | 'container' | 'parents' | 'leaf' | 'branch';
@@ -211,6 +216,27 @@ class SignalPathTrie {
     return out;
   }
 
+  /**
+   * Splice-precise descendants: like descendantsOf(arrayPath) but collects only the subtrees
+   * of array indices >= startIndex. After splice(startIndex, …) the prefix [0, startIndex) keeps
+   * both value AND index, so its signals must NOT be woken. Non-numeric children (defensive —
+   * should not occur on arrays) are always included so correctness never regresses.
+   */
+  descendantsFromArrayIndex(arrayPath: string, startIndex: number): string[] {
+    if (!arrayPath) return [];
+    const node = this.nodeAt(arrayPath);
+    if (!node || !node.children) return [];
+    const out: string[] = [];
+    for (const [seg, child] of node.children) {
+      const idx = Number(seg);
+      if (Number.isInteger(idx) && idx < startIndex) continue; // untouched prefix — skip
+      const childPath = `${arrayPath}.${seg}`;
+      if (child.present) out.push(childPath);
+      if (child.children) this.collect(child, childPath, out, null);
+    }
+    return out;
+  }
+
   private nodeAt(path: string): SignalPathTrieNode | undefined {
     let node: SignalPathTrieNode | undefined = this.root;
     let start = 0;
@@ -259,7 +285,7 @@ class SolidProxyManager {
   constructor(private mutator: StoreMutator, private opts: SolidProxyOptions = {}) {
     // Respect initial option for low-level usage
     if (opts.wakeParentsOnChange !== undefined) {
-      (mutator as any)._wakeParentsOnChange = opts.wakeParentsOnChange;
+      this.mutator._wakeParentsOnChange = opts.wakeParentsOnChange;
     }
 
     if (typeof FinalizationRegistry !== 'undefined') {
@@ -276,7 +302,7 @@ class SolidProxyManager {
   // Current wake mode is always read dynamically from the mutator.
   // This allows clean runtime switching via store.wakeUp(...)
   private get shouldWakeParents(): boolean {
-    return !!(this.mutator as any)._wakeParentsOnChange;
+    return !!this.mutator._wakeParentsOnChange;
   }
 
   private getSignal(path: string): [Accessor<unknown>, Setter<unknown>] {
@@ -365,6 +391,27 @@ class SolidProxyManager {
 
   private syncDescendantsOfAny(pathPrefixes: readonly string[]): void {
     for (const path of this.signalIndex.descendantsOfAny(pathPrefixes)) this.updateSignal(path);
+  }
+
+  /**
+   * Precise splice wake (opt-in via SolidStore preciseMutationWake). Bounded analog of the
+   * generic branch-replace path for splice(start>0): wakes the array signal + only the element
+   * signals at index >= start (skipping the untouched [0,start) prefix) + branch subscribers on
+   * the array path. The caller (SolidStore.#tryPreciseSplice) only routes here in grained mode;
+   * container mode keeps the proven full syncDescendants path so ancestor/parents wake is
+   * byte-for-byte identical to before. Defensive shouldWakeParents guard mirrors that contract.
+   */
+  wakeArraySplice(arrayPath: string, startIndex: number): void {
+    if (this.shouldWakeParents) {
+      // Defensive: should never be reached (caller guards), but keep full parity if it is.
+      this.syncDescendants(arrayPath);
+    } else {
+      for (const path of this.signalIndex.descendantsFromArrayIndex(arrayPath, startIndex)) {
+        this.updateSignal(path);
+      }
+    }
+    this.wakeExact(arrayPath);
+    if (this.branchSubs.size > 0) this.wakeBranchSubscribers([arrayPath]);
   }
 
 
@@ -456,6 +503,11 @@ class SolidProxyManager {
 
   wakeMutations(results: readonly JsonMutationResult[]): void {
     this.wakeFromMutations(results);
+  }
+
+  /** Snapshot of proxy-graph sizes for devtools PROXY_METRICS emission (Angular parity). */
+  metrics(): { signals: number; proxies: number; branchSubs: number } {
+    return { signals: this.signals.size, proxies: this.proxies.size, branchSubs: this.branchSubs.size };
   }
 
   /** Ensure all parent proxies exist for a deep path (part of navigation/wake-up). */
@@ -716,12 +768,16 @@ class SolidProxyManager {
 
 export function createSolidProxy<T>(mutator: StoreMutator, options: SolidProxyOptions = {}): T {
   const mgr = new SolidProxyManager(mutator, options);
-  (mutator as any).__wakeSignalPath = (path: string, mode?: SolidWakeMode) => mgr.wakePath(path, mode);
-  (mutator as any).__wakeMutationResult = (result: JsonMutationResult) => mgr.wakeMutation(result);
-  (mutator as any).__wakeMutationResults = (results: JsonMutationResult[]) => mgr.wakeMutations(results);
-  // opinia5: let the store register/unregister per-query branch interest (for $liveQuery).
-  (mutator as any).__addBranchSub = (path: string) => mgr.addBranchSub(path);
-  (mutator as any).__removeBranchSub = (path: string) => mgr.removeBranchSub(path);
+  // Typed reactivity binding (replaces six `(mutator as any).__wakeX = ...` casts).
+  mutator.bindReactivity?.({
+    wakeMutation: (result) => mgr.wakeMutation(result),
+    wakeMutations: (results) => mgr.wakeMutations(results),
+    wakeArraySplice: (arrayPath, startIndex) => mgr.wakeArraySplice(arrayPath, startIndex),
+    addBranchSub: (path) => mgr.addBranchSub(path),
+    removeBranchSub: (path) => mgr.removeBranchSub(path),
+    wakeSignalPath: (path, mode) => mgr.wakePath(path, mode),
+    getProxyMetrics: () => mgr.metrics(),
+  });
   const fac = (p: string) => mgr.make(p, fac);
   return mgr.make('', fac) as T;
 }

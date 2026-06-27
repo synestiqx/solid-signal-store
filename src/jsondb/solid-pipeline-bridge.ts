@@ -2,8 +2,8 @@
  * solid-pipeline-bridge.ts
  * Thin Solid integration layer under jsondb/.
  *
- * jsondb/synced/ is a verbatim copy from canonical Angular JsonDB.
- * This bridge may differ; shared data-engine is exported through jsondb/data-engine.
+ * Reusable JsonDB logic is imported from @synestiqx/jsondb.
+ * This bridge may differ; shared data-engine is exported through @synestiqx/jsondb/data-engine.
  *
  * Every reusable fast path now lives in the shared library
  * (synced/core/pipeline-fastpath.ts): the flat-array where+actions COW engine,

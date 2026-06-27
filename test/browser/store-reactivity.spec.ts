@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+async function openDemoFromWelcome(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await expect(page.getByText('Live Proxy + JsonDB Demo')).toBeVisible();
+  await page.locator('.tile').filter({ hasText: 'Live Demo' }).click();
+  await expect(page.getByText('store-solid + jsondb')).toBeVisible();
+}
+
 /**
  * Real Playwright verification for store-solid jsondb browser demo (further strengthened for premium verification).
  *
@@ -35,11 +42,10 @@ test.describe('store-solid jsondb browser demo', () => {
       console.error('[PAGE ERROR]', err.message);
     });
 
-    await page.goto('/');
+    await openDemoFromWelcome(page);
 
     // Sanity: initial title + root content
     await expect(page).toHaveTitle(/store-solid jsondb Demo/i);
-    await expect(page.getByText('store-solid + jsondb')).toBeVisible();
 
     // Click the automated driver (exercises ALL shapes via real bridge)
     const runBtn = page.getByRole('button', { name: /Run Full Automated Suite/i });
@@ -353,7 +359,7 @@ test.describe('store-solid jsondb browser demo', () => {
     const logs: string[] = [];
     page.on('console', (m) => logs.push(m.text()));
 
-    await page.goto('/');
+    await openDemoFromWelcome(page);
 
     // Click one manual flat op
     await page.getByRole('button', { name: /where \+ sugar update/i }).first().click();
@@ -371,7 +377,7 @@ test.describe('store-solid jsondb browser demo', () => {
   });
 
   test('store board proxy clicks work with exact/branch wake and batch on/off', async ({ page }) => {
-    await page.goto('/');
+    await openDemoFromWelcome(page);
     const panel = page.getByTestId('solid-store-board-lab');
     await expect(panel).toBeVisible();
 
@@ -401,7 +407,7 @@ test.describe('store-solid jsondb browser demo', () => {
   });
 
   test('nestable CMS sequence works in jsondb/direct/native with wake and batch combinations', async ({ page }) => {
-    await page.goto('/');
+    await openDemoFromWelcome(page);
     const panel = page.getByTestId('solid-nestable-lab');
     await expect(panel).toBeVisible();
 
@@ -441,7 +447,7 @@ test.describe('store-solid jsondb browser demo', () => {
     const logs: string[] = [];
     page.on('console', (m) => logs.push(m.text()));
 
-    await page.goto('/');
+    await openDemoFromWelcome(page);
 
     // Trigger only the pure checks (reliable, independent path)
     await page.getByRole('button', { name: /Pure Reactivity Checks/i }).click();

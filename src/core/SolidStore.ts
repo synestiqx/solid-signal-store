@@ -24,8 +24,9 @@ import {
   type JsonMutationResult,
 } from '@synestiqx/jsondb/data-engine';
 import { createProjectionObservable, type ProjectionObservableOptions } from './rx-interop';
+import { SolidDevService, type DevStream, type DevToolsEvent as SolidDevToolsEvent } from './dev-service';
 import type { SolidJsondbBridge } from '../jsondb/solid-pipeline-bridge';
-import type { SolidStoreProxy } from './proxy-types';
+import type { SolidStoreProxy, SolidStoreReactivity } from './proxy-types';
 
 // --- Minimal local contracts (no reliance on incomplete synced types) ---
 
@@ -82,6 +83,12 @@ export interface SolidStoreOptions {
    * everywhere else. Falls back to the branch commit for structural/deep ops.
    */
   preciseMutationWake?: boolean;
+
+  /**
+   * Internal test hook: invoked with the path on every signal-update CALL. Lets contract
+   * tests prove wake *work* granularity without prototype hacks. Forwarded to SolidProxyOptions.
+   */
+  _onSignalUpdate?: (path: string) => void;
 }
 
 export type StoreDevToolsAction = {
@@ -116,21 +123,32 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   private name: string;
   private devActive = false;
   private readonly opts: SolidStoreOptions;
+  // Typed reactivity surface installed by createSolidProxy (replaces `(this as any).__wakeX`).
+  private reactivity?: SolidStoreReactivity;
+  // Typed wake-parents flag (read by the proxy manager's shouldWakeParents getter).
+  _wakeParentsOnChange = false;
+  // Per-store devtools stream service (parity with Angular DevService).
+  private readonly devService = new SolidDevService();
+  /** Action stream (subscribe for SET_VALUE/MUTATE/DELETE/PROXY_METRICS events). */
+  readonly devAction$: DevStream = this.devService.action$;
+  /** Read/history stream (excludes PROXY_METRICS, parity with Angular readAction$). */
+  readonly devReadAction$: DevStream = this.devService.readAction$;
+
+  /** Typed binding called by createSolidProxy so the store can wake proxy-owned signals. */
+  bindReactivity(api: SolidStoreReactivity): void { this.reactivity = api; }
 
   constructor(initial: T, name = 'default', opts: SolidStoreOptions = {}) {
     this.name = name;
     this.opts = opts;
     this.data = this.#clone(initial ?? ({} as T));
 
-    const mutator = this as unknown as StoreMutator & Record<string, any>;
-    const initialWakeParents = opts.wakeParentsOnChange ?? false;
-
-    // Set initial mode on the mutator so the proxy can read it dynamically
-    (mutator as any)._wakeParentsOnChange = initialWakeParents;
+    const mutator = this as unknown as StoreMutator;
+    this._wakeParentsOnChange = opts.wakeParentsOnChange ?? false;
 
     const pOpts: SolidProxyOptions = {
       strictInvalidPath: opts.strict?.invalidPath,
       strictDeleteUndefined: opts.strict?.deleteUndefined,
+      ...(opts._onSignalUpdate ? { _onSignalUpdate: opts._onSignalUpdate } : {}),
     };
     this.store = createSolidProxy<SolidStoreProxy<T>>(mutator, pOpts);
 
@@ -169,23 +187,16 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     return deleteJsonPath(this.data, p);
   }
 
-  #proxyParent(p: string): { node: any; key: string | null } {
-    const plan = createJsonPathPlan(p);
-    if (plan.key == null) return { node: this.store as any, key: null };
-    let node: any = this.store as any;
-    for (const segment of plan.parentSegments) {
-      if (node == null) return { node: undefined, key: plan.key };
-      node = node[segment];
-    }
-    return { node, key: plan.key };
-  }
-
-  // Use proxy assignment to wake signals + run traps (emit/sync) after bulk ops.
-  // Now delegates to SST resolveParentAndKey (micro-walk unification).
+  // Direct raw-data write + explicit signal wake + devtools emit. Replaces the previous
+  // proxy-walk (`#proxyParent` + `node[last] = v`) which read/created proxy nodes during
+  // commits — wasteful and a side-effect hazard. Mirrors Angular's `mutateStoreNormalized`
+  // (#set + #wakeMutation) and the existing #commitPrecise pattern. `writeJsonPath` returns
+  // the JsonMutationResult so the wake is identical to what the proxy set trap would do.
   #assign(p: string, v: unknown): void {
     if (!p) return;
-    const { node, key: last } = this.#proxyParent(p);
-    if (node != null && last != null) node[last] = v;
+    const result = this.#set(p, v);
+    this.#wakeMutation(result);
+    this.emitDevAction({ type: 'SET_VALUE', payload: { path: p, value: v } });
   }
 
   #isBranchValue(value: unknown): boolean {
@@ -193,14 +204,12 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   }
 
   #wakeMutation(result: JsonMutationResult): void {
-    const wake = (this as any).__wakeMutationResult as ((mutation: JsonMutationResult) => void) | undefined;
-    wake?.(result);
+    this.reactivity?.wakeMutation(result);
   }
 
   #wakeMutations(results: JsonMutationResult[]): void {
-    const wakeMany = (this as any).__wakeMutationResults as ((mutations: JsonMutationResult[]) => void) | undefined;
-    if (wakeMany) {
-      wakeMany(results);
+    if (this.reactivity) {
+      this.reactivity.wakeMutations(results);
       return;
     }
     for (const result of results) this.#wakeMutation(result);
@@ -278,7 +287,12 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   prefetch(pathPrefix: string): void { this.#get(pathPrefix ?? ''); /* warms for cursor/prefetch contract */ }
   emitDevAction(action: StoreDevToolsAction): void {
     if (!this.devActive) return;
-    queueMicrotask(() => emitDev({ ...action, storeName: this.name }));
+    const event = { ...action, storeName: this.name } as SolidDevToolsEvent;
+    // Per-store typed stream (parity with Angular DevService.action$ / readAction$).
+    this.devService.emitAction(event);
+    if (action.type !== 'PROXY_METRICS') this.devService.emitRead(event);
+    // Legacy global bus kept for back-compat (onSolidDevAction public API).
+    queueMicrotask(() => emitDev(event));
   }
   cleanupPath(path: string): void {
     this.emitDevAction({ type: 'CLEANUP', payload: { path, cleanedPaths: [path], cleanedCount: 1 } });
@@ -290,8 +304,9 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   setValue(path: string, value: unknown): void { this.#assign(path ?? '', value); }
   deleteValue(path: string): void {
     if (!path) return;
-    const { node, key: last } = this.#proxyParent(path);
-    if (node && last != null) delete node[last];
+    const result = this.#delete(path);
+    this.#wakeMutation(result);
+    this.emitDevAction({ type: 'DELETE', payload: { path } });
   }
 
   // Uses shared constants from array layer (single source of truth — zero duplication with executeArrayOperation)
@@ -319,6 +334,15 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     // methods (splice/shift/unshift/sort/reverse/…) reindex and keep the proven path unchanged.
     const precise = this.#tryPreciseTailArrayOp(path, cur, method, args);
     if (precise) return precise.result;
+
+    // opinia6 (unify): precise splice. When preciseMutationWake is on, splice(start>0) wakes only
+    // element signals at index >= start (skips the untouched [0,start) prefix), mirroring Angular's
+    // computeSpliceInvalidationStart at the signal level. push/pop are already precise above;
+    // shift/unshift/reverse/sort touch index 0 (no prefix to skip) and keep the proven branch path.
+    if (this.opts.preciseMutationWake && method === 'splice') {
+      const spliced = this.#tryPreciseSplice(path, cur, args);
+      if (spliced) return spliced.result;
+    }
 
     const arr = [...cur];
     const r = applyArrayMutation(arr, method, args);
@@ -367,6 +391,25 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
       return { result: popped };
     }
     return null;
+  }
+
+  // Precise splice (opt-in): COW + data write, then wake only signals at index >= start.
+  // Returns boxed removed[] when handled, or null to fall through to the proven branch path
+  // (container mode, or start<=0 where the whole array shifts and there is no prefix to skip).
+  #tryPreciseSplice(path: string, cur: unknown[], args: unknown[]): { result: unknown } | null {
+    // Container mode wakes ancestors too — keep the proven full-branch path for byte parity.
+    if (this._wakeParentsOnChange) return null;
+    const len = cur.length;
+    const rawStart = Number(args[0] ?? 0);
+    const start = rawStart < 0 ? Math.max(len + rawStart, 0) : Math.min(rawStart, len);
+    if (start <= 0) return null; // no untouched prefix to skip
+    const next = [...cur];
+    const removed = applyArrayMutation(next, 'splice', args);
+    this.#set(path, next);
+    this.batch(() => {
+      this.reactivity?.wakeArraySplice(path, start);
+    });
+    return { result: removed };
   }
 
   // query dispatch from proxy (array query surface parity)
@@ -505,14 +548,14 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
 
   #createLiveQuery(path: string, ops: any[], mode: 'all' | 'first'): SolidLiveQuery<unknown> {
     const p = path ?? '';
-    const addBranch = (this as any).__addBranchSub as ((path: string) => void) | undefined;
-    const removeBranch = (this as any).__removeBranchSub as ((path: string) => void) | undefined;
-    addBranch?.(p); // creation ref — keeps the accessor reactive until the query is disposed
+    const addBranch = (p: string) => this.reactivity?.addBranchSub(p);
+    const removeBranch = (p: string) => this.reactivity?.removeBranchSub(p);
+    addBranch(p); // creation ref — keeps the accessor reactive until the query is disposed
     let creationReleased = false;
     const releaseCreation = () => {
       if (creationReleased) return;
       creationReleased = true;
-      removeBranch?.(p);
+      removeBranch(p);
     };
     const acc = createMemo(() => {
       this.#trackBranch(p);
@@ -571,6 +614,19 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     registry.delete(this.name);
     this.devActive = false;
     this.emitDevAction({ type: 'STORE_DESTROYED', payload: { storeName: this.name } });
+    this.devService.destroy();
+  }
+
+  /**
+   * Emit a PROXY_METRICS snapshot (signals / proxies / branchSubs sizes). Parity with
+   * Angular's emitProxyMetrics. Only fires when devtools is active. Throttling is the
+   * caller's responsibility (matching Angular's metricsThrottleMs).
+   */
+  emitProxyMetrics(): void {
+    if (!this.devActive) return;
+    const metrics = this.reactivity?.getProxyMetrics?.();
+    if (!metrics) return;
+    this.devService.emitProxyMetrics(this.name, metrics);
   }
 
   returnStore(): SolidStoreProxy<T> { return this.store; }
@@ -598,11 +654,10 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   wakeUp(pathOrMode: string, mode?: SolidWakeMode): void {
     if (mode === undefined && GLOBAL_WAKE_MODES.has(pathOrMode as SolidWakeMode)) {
       const normalized = pathOrMode === 'fine' || pathOrMode === 'grained' || pathOrMode === 'exact' ? false : true;
-      (this as any)._wakeParentsOnChange = normalized;
+      this._wakeParentsOnChange = normalized;
       return;
     }
-    const wakePath = (this as any).__wakeSignalPath as ((path: string, mode?: SolidWakeMode) => void) | undefined;
-    wakePath?.(pathOrMode, mode ?? 'grained');
+    this.reactivity?.wakeSignalPath(pathOrMode, mode ?? 'grained');
   }
 }
 

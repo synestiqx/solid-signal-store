@@ -26,9 +26,10 @@
     "build": "tsc && node scripts/fix-dist-esm-extensions.mjs",
     "typecheck": "tsc --noEmit",
     "prepack": "bun run build",
-    "test": "bun run test:types && bun run test:array-methods && bun run test:proxy-delete && bun run test:wakeup-batch && bun run test:select-observable && bun run test:nested-tree-batch && bun run test:nestable-cms && bun run test:store-component-flow && bun run test:store-board-wakeup && bun run test:deep-proxy-jsondb && bun run test:livequery && bun run test:bridge-contract",
+    "test": "bun run test:types && bun run test:array-methods && bun run test:proxy-delete && bun run test:wakeup-batch && bun run test:select-observable && bun run test:nested-tree-batch && bun run test:nestable-cms && bun run test:store-component-flow && bun run test:store-board-wakeup && bun run test:deep-proxy-jsondb && bun run test:livequery && bun run test:bridge-contract && bun run test:array-splice-precise",
     "verify": "bunx tsx verify.ts",
     "demo": "bunx tsx demo.ts",
+    "bench:splice-precise": "bun --conditions browser test/splice-precise-bench.ts",
     "bench:recursive-models": "bun test/recursive-models-compare.ts",
     "bench:native": "bun --conditions browser test/native-vs-store-bench.ts",
     "test:types": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --skipLibCheck test/types-proxy-contract.ts",
@@ -50,7 +51,8 @@
     "test:browser": "bun run browser-demo:install && bunx playwright test",
     "test:browser:ui": "bun run browser-demo:install && bunx playwright test --ui",
     "install:browsers": "bunx playwright install",
-    "test:bridge-contract": "bun --conditions browser test/jsondb-bridge-contract.test.ts"
+    "test:bridge-contract": "bun --conditions browser test/jsondb-bridge-contract.test.ts",
+    "test:array-splice-precise": "bun --conditions browser test/array-splice-precise-wake.test.ts"
   },
   "peerDependencies": {
     "solid-js": "^1.8.0",
