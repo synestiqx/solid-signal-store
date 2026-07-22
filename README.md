@@ -215,6 +215,26 @@ api.destroy();
 
 Destroy is idempotent, removes the named registry entry only when it still owns it, clears signal/proxy/query caches, subscriptions, and the attached devtools adapter.
 
+## Use With AI Coding Agents
+
+The package ships a `SKILL.md` written in the [Agent Skills](https://agentskills.io)
+format, covering the architecture rule, the JSX rules, batching, wake modes, and JSNQ.
+Install it so an agent applies the store correctly instead of guessing at the proxy API:
+
+```sh
+# this project only
+mkdir -p .claude/skills/solid-signal-store
+cp node_modules/solid-signal-store/SKILL.md .claude/skills/solid-signal-store/
+
+# or for every project
+mkdir -p ~/.claude/skills/solid-signal-store
+cp node_modules/solid-signal-store/SKILL.md ~/.claude/skills/solid-signal-store/
+```
+
+Claude Code picks the skill up without a restart and loads it when the task involves this
+store. Agents that do not read `.claude/skills/` can be pointed at
+`node_modules/solid-signal-store/SKILL.md` directly.
+
 ## Verify
 
 ```sh

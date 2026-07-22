@@ -13,7 +13,7 @@ import {
   type StoreMutator,
   type SolidProxyOptions,
 } from '../proxy/solid-proxy';
-import { createArrayChain, ARRAY_QUERY_METHODS, ARRAY_MUTATION_METHODS, applyArrayMutation } from '../array/solid-array'; // clean top-level import (premium wiring) + shared method sets + pure dispatch (max dispatch style, no switches)
+import { createArrayChain, ARRAY_QUERY_METHODS, ARRAY_MUTATION_METHODS, applyArrayMutation } from '../array/solid-array'; // top-level import + shared method sets + pure dispatch (no switches)
 import {
   cloneJsonData,
   createJsonPathPlan,
