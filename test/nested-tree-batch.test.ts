@@ -1,8 +1,8 @@
 import { createEffect, createRoot } from 'solid-js';
 import { createSolidStore } from '../src';
 import '../src/jsnq';
-import where from 'jsnq/operators/where';
-import moveTo from 'jsnq/operators/moveTo';
+import where from '@adsq/jsnq/operators/where';
+import moveTo from '@adsq/jsnq/operators/moveTo';
 
 interface MenuNode {
   id: string;
@@ -16,7 +16,7 @@ interface MenuState {
   };
 }
 
-type MoveMode = 'jsnq' | 'direct';
+type MoveMode = '@adsq/jsnq' | 'direct';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -123,7 +123,7 @@ function runScenario(mode: MoveMode, batched: boolean, wakeMode: 'grained' | 'co
     });
 
     const runMoves = () => {
-      if (mode === 'jsnq') {
+      if (mode === '@adsq/jsnq') {
         api.mutate('menu.fields', where('id', '===', 'dashboard'), moveTo('2', 'after'));
         api.mutate('menu.fields', where('id', '===', 'pricing'), moveTo('1.fields', 'inside', 0));
         api.mutate('menu.fields', where('id', '===', 'variants'), moveTo('0.fields.0', 'before'));
@@ -170,10 +170,10 @@ function runScenario(mode: MoveMode, batched: boolean, wakeMode: 'grained' | 'co
 }
 
 const scenarios = [
-  runScenario('jsnq', false, 'grained'),
-  runScenario('jsnq', true, 'grained'),
-  runScenario('jsnq', false, 'container'),
-  runScenario('jsnq', true, 'container'),
+  runScenario('@adsq/jsnq', false, 'grained'),
+  runScenario('@adsq/jsnq', true, 'grained'),
+  runScenario('@adsq/jsnq', false, 'container'),
+  runScenario('@adsq/jsnq', true, 'container'),
   runScenario('direct', false, 'grained'),
   runScenario('direct', true, 'grained'),
   runScenario('direct', false, 'container'),

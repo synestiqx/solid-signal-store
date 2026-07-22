@@ -9,7 +9,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'solid-signal-store': resolve(__dirname, '../../src'),
+      '@adsq/solid-signal-store': resolve(__dirname, '../../src'),
     },
   },
 });

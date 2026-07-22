@@ -1,8 +1,8 @@
 import { createRoot } from 'solid-js';
 import { createSolidStore } from '../src';
 import '../src/jsnq'; // registers the global jsnq bridge (required for $query/$liveQuery/$mutate)
-import where from 'jsnq/operators/where';
-import update from 'jsnq/operators/update';
+import where from '@adsq/jsnq/operators/where';
+import update from '@adsq/jsnq/operators/update';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);

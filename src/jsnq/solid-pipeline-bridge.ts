@@ -14,15 +14,15 @@
  * fallback that never throws into the reactive graph.
  */
 
-import { PipelineWrapper } from 'jsnq/core/pipeline-wrapper';
-import { cloneJsonData as cloneJson } from 'jsnq/core/data-engine';
+import { PipelineWrapper } from '@adsq/jsnq/core/pipeline-wrapper';
+import { cloneJsonData as cloneJson } from '@adsq/jsnq/core/data-engine';
 import {
   applyDeepSugarPatch,
   collectPipelineIntent,
   isDeepSugarAction,
   tryFastPipelineMutation,
   tryFastStructuralMutation,
-} from 'jsnq/core/pipeline-fastpath';
+} from '@adsq/jsnq/core/pipeline-fastpath';
 
 export interface SolidPipelineOptions {
   isRoot?: boolean;

@@ -1,10 +1,10 @@
 import { createMemo, createRoot } from 'solid-js';
 import { createSolidStore, onSolidDevAction } from '../src';
 import '../src/jsnq';
-import where from 'jsnq/operators/where';
-import update from 'jsnq/operators/update';
-import insert from 'jsnq/operators/insert';
-import moveToMatches from 'jsnq/operators/moveToMatches';
+import where from '@adsq/jsnq/operators/where';
+import update from '@adsq/jsnq/operators/update';
+import insert from '@adsq/jsnq/operators/insert';
+import moveToMatches from '@adsq/jsnq/operators/moveToMatches';
 
 type WakeMode = 'grained' | 'container';
 

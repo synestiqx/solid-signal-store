@@ -1,4 +1,4 @@
-import type { JsonMutationResult } from 'jsnq/data-engine';
+import type { JsonMutationResult } from '@adsq/jsnq/data-engine';
 import type { SolidWakeMode } from '../proxy/solid-proxy.js';
 export type StorePrimitive = string | number | boolean | bigint | symbol | null | undefined;
 /** Proxy-graph sizes for devtools metrics (parity with Angular ProxyCacheManager.metricsSnapshot). */

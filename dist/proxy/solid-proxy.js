@@ -2,7 +2,7 @@
 import { createSignal } from 'solid-js';
 import { enumerateAncestors, getParentPath, isValidPath, normalizePath } from '../internal/path.js'; // delegates to SST (internal/path.ts) — all parent walks now reuse shared path core (max unification, zero naked path building)
 import { ARRAY_METHODS } from '../array/solid-array.js';
-import { createMutationResult } from 'jsnq/data-engine';
+import { createMutationResult } from '@adsq/jsnq/data-engine';
 import { createProjectionObservable } from '../core/rx-interop.js';
 function isDispatchMethod(method) {
     switch (method) {

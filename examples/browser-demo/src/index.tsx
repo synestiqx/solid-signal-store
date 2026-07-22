@@ -1,9 +1,9 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-js';
 import { render } from 'solid-js/web';
-import { createSolidStore, onSolidDevAction, waitForStore } from 'solidstore';
-import 'solidstore/jsnq';
-import where from 'jsnq/operators/where';
-import update from 'jsnq/operators/update';
+import { createSolidStore, onSolidDevAction, waitForStore } from '@adsq/solid-signal-store';
+import '@adsq/solid-signal-store/jsnq';
+import where from '@adsq/jsnq/operators/where';
+import update from '@adsq/jsnq/operators/update';
 
 type Tab = 'store' | 'design' | 'dashboard';
 type WakeMode = 'grained' | 'container';
@@ -256,7 +256,7 @@ function App() {
   onMount(async () => {
     await waitForStore('dashboard', { timeoutMs: 1_000 });
     if (import.meta.env.DEV) {
-      const { createSolidDevtools } = await import('solidstore/devtools');
+      const { createSolidDevtools } = await import('@adsq/solid-signal-store/devtools');
       appApi.attachDevtools(createSolidDevtools());
       appApi.enableDevTools('app');
     }

@@ -1,4 +1,4 @@
-import { type JsonMutationResult } from 'jsnq/data-engine';
+import { type JsonMutationResult } from '@adsq/jsnq/data-engine';
 import type { SolidStoreReactivity } from '../core/proxy-types.js';
 export interface StoreMutator {
     read(path: string): unknown;

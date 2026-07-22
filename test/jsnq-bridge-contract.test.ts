@@ -21,18 +21,18 @@ import { createRoot, createEffect } from 'solid-js';
 import { applyPipelineMutation } from '../src/jsnq/solid-pipeline-bridge';
 import { createSolidStore } from '../src';
 import '../src/jsnq'; // global bridge registration for $mutate / $liveQuery
-import where from 'jsnq/operators/where';
-import update from 'jsnq/operators/update';
-import replace from 'jsnq/operators/replace';
-import mergeUpdate from 'jsnq/operators/mergeUpdate';
-import deleteKey from 'jsnq/operators/deleteKey';
-import deleteElement from 'jsnq/operators/deleteElement';
-import insert from 'jsnq/operators/insert';
-import insertTo from 'jsnq/operators/insertTo';
-import moveTo from 'jsnq/operators/moveTo';
-import copyTo from 'jsnq/operators/copyTo';
-import moveToMatches from 'jsnq/operators/moveToMatches';
-import copyToAll from 'jsnq/operators/copyToAll';
+import where from '@adsq/jsnq/operators/where';
+import update from '@adsq/jsnq/operators/update';
+import replace from '@adsq/jsnq/operators/replace';
+import mergeUpdate from '@adsq/jsnq/operators/mergeUpdate';
+import deleteKey from '@adsq/jsnq/operators/deleteKey';
+import deleteElement from '@adsq/jsnq/operators/deleteElement';
+import insert from '@adsq/jsnq/operators/insert';
+import insertTo from '@adsq/jsnq/operators/insertTo';
+import moveTo from '@adsq/jsnq/operators/moveTo';
+import copyTo from '@adsq/jsnq/operators/copyTo';
+import moveToMatches from '@adsq/jsnq/operators/moveToMatches';
+import copyToAll from '@adsq/jsnq/operators/copyToAll';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -73,7 +73,7 @@ function testMissingBridgeFailsExplicitly(): void {
     const api = createSolidStore({ users: flatUsers() } as any, 'contract_missing_bridge');
     let threw = false;
     try { api.store.users.$mutate(where('id', '===', 1), update('name', 'Ada')); }
-    catch (error) { threw = String(error).includes("Import 'solid-signal-store/jsnq'"); }
+    catch (error) { threw = String(error).includes("Import '@adsq/solid-signal-store/jsnq'"); }
     assert(threw, 'missing optional bridge throws an actionable error');
     api.destroy();
   } finally {

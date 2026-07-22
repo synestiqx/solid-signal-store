@@ -13,7 +13,7 @@
  * reactivity wants a fresh deep reference) and the defensive full-pipeline
  * fallback that never throws into the reactive graph.
  */
-import { PipelineWrapper } from 'jsnq/core/pipeline-wrapper';
+import { PipelineWrapper } from '@adsq/jsnq/core/pipeline-wrapper';
 export interface SolidPipelineOptions {
     isRoot?: boolean;
     path?: string;

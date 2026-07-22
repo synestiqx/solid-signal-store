@@ -13,9 +13,9 @@
  * reactivity wants a fresh deep reference) and the defensive full-pipeline
  * fallback that never throws into the reactive graph.
  */
-import { PipelineWrapper } from 'jsnq/core/pipeline-wrapper';
-import { cloneJsonData as cloneJson } from 'jsnq/core/data-engine';
-import { applyDeepSugarPatch, collectPipelineIntent, isDeepSugarAction, tryFastPipelineMutation, tryFastStructuralMutation, } from 'jsnq/core/pipeline-fastpath';
+import { PipelineWrapper } from '@adsq/jsnq/core/pipeline-wrapper';
+import { cloneJsonData as cloneJson } from '@adsq/jsnq/core/data-engine';
+import { applyDeepSugarPatch, collectPipelineIntent, isDeepSugarAction, tryFastPipelineMutation, tryFastStructuralMutation, } from '@adsq/jsnq/core/pipeline-fastpath';
 export function applyPipelineMutation(ops, currentValue, options = {}) {
     if (!ops || ops.length === 0)
         return currentValue;

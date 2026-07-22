@@ -8,7 +8,7 @@
 import { batch, createMemo } from 'solid-js';
 import { createSolidProxy, } from '../proxy/solid-proxy.js';
 import { createArrayChain, ARRAY_QUERY_METHODS, ARRAY_MUTATION_METHODS, applyArrayMutation } from '../array/solid-array.js'; // clean top-level import (premium wiring) + shared method sets + pure dispatch (max dispatch style, no switches)
-import { cloneJsonData, createJsonPathPlan, createMutationResult, deleteJsonPath, readJsonPath, writeJsonPath, writeJsonPathValue, } from 'jsnq/data-engine';
+import { cloneJsonData, createJsonPathPlan, createMutationResult, deleteJsonPath, readJsonPath, writeJsonPath, writeJsonPathValue, } from '@adsq/jsnq/data-engine';
 import { createProjectionObservable } from './rx-interop.js';
 import { EMPTY_DEV_STREAM, } from './devtools-contract.js';
 const GLOBAL_WAKE_MODES = new Set(['grained', 'fine', 'exact', 'container', 'parents', 'leaf', 'branch']);
@@ -335,7 +335,7 @@ export class SolidStore {
         if (bridge)
             return bridge;
         throw new Error(`[SolidStore] ${operation} requires the optional JSNQ bridge. ` +
-            `Import 'solid-signal-store/jsnq' once or pass { jsnqBridge } to createSolidStore().`);
+            `Import '@adsq/solid-signal-store/jsnq' once or pass { jsnqBridge } to createSolidStore().`);
     }
     // Jsnq bridge dispatch (mutate/pipe) — exact future contract, no dupe of pipeline
     mutate(path, ...ops) {

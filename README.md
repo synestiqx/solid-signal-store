@@ -5,17 +5,17 @@ Fine-grained SolidJS store with a callable proxy API and optional JSNQ/devtools 
 ## Install
 
 ```sh
-npm install solid-js jsnq solid-signal-store
+npm install solid-js @adsq/jsnq @adsq/solid-signal-store
 # or
-bun add solid-js jsnq solid-signal-store
+bun add solid-js @adsq/jsnq @adsq/solid-signal-store
 ```
 
-Solid `>=1.8 <2` and `jsnq` are peer dependencies, so the application supplies one framework runtime. The test matrix covers the minimum supported Solid line and current Solid 1.9. Built ESM and `.d.ts` files are committed, so the package can also be consumed straight from Git without building sources.
+Solid `>=1.8 <2` and `@adsq/jsnq` are peer dependencies, so the application supplies one framework runtime. The test matrix covers the minimum supported Solid line and current Solid 1.9. Built ESM and `.d.ts` files are committed, so the package can also be consumed straight from Git without building sources.
 
 ## Create And Use A Store
 
 ```ts
-import { createSolidStore } from 'solid-signal-store';
+import { createSolidStore } from '@adsq/solid-signal-store';
 
 const api = createSolidStore({
   user: { name: 'Ann', tags: ['admin'] },
@@ -46,9 +46,9 @@ For static TypeScript safety, declare optional/dynamic fields in the state inter
 The core proxy does not import the JSNQ pipeline bridge. Import the bridge only in an application that calls `mutate`, `$query`, or `$liveQuery`:
 
 ```ts
-import 'solid-signal-store/jsnq';
-import where from 'jsnq/operators/where';
-import update from 'jsnq/operators/update';
+import '@adsq/solid-signal-store/jsnq';
+import where from '@adsq/jsnq/operators/where';
+import update from '@adsq/jsnq/operators/update';
 
 store.userList.mutate(
   where('active', '===', true),
@@ -78,8 +78,8 @@ The initial state is cloned when `createSolidStore` is called. Reactive infrastr
 - path signals are created on first reactive read;
 - computed projections and live queries are created only when requested;
 - subscriptions allocate an effect only on `subscribe()` and dispose it on unsubscribe;
-- JSNQ code enters the graph only through `solidstore/jsnq`;
-- devtools code enters the graph only through `solidstore/devtools`;
+- JSNQ code enters the graph only through `@adsq/solid-signal-store/jsnq`;
+- devtools code enters the graph only through `@adsq/solid-signal-store/devtools`;
 - named-store waiters exist only while code is waiting for a store.
 
 Unused paths have no signal, computed node, BehaviorSubject, or subscription allocation.
@@ -89,7 +89,7 @@ Unused paths have no signal, computed node, BehaviorSubject, or subscription all
 When a module or service owns the `api`/`store` reference returned by `createSolidStore`, use that reference directly. `waitForStore` is only for a separate asynchronously loaded consumer that may run before the owner creates the named store.
 
 ```ts
-import { createSolidStore, useSolidStore, waitForStore } from 'solid-signal-store';
+import { createSolidStore, useSolidStore, waitForStore } from '@adsq/solid-signal-store';
 
 const pending = waitForStore('dashboard', { timeoutMs: 5_000 });
 
@@ -142,7 +142,7 @@ back to a branch commit.
 
 ```ts
 if (import.meta.env.DEV) {
-  const { createSolidDevtools } = await import('solid-signal-store/devtools');
+  const { createSolidDevtools } = await import('@adsq/solid-signal-store/devtools');
   api.attachDevtools(createSolidDevtools());
   api.enableDevTools('app');
 }

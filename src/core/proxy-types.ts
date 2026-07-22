@@ -1,4 +1,4 @@
-import type { JsonMutationResult } from 'jsnq/data-engine';
+import type { JsonMutationResult } from '@adsq/jsnq/data-engine';
 import type { SolidWakeMode } from '../proxy/solid-proxy';
 
 export type StorePrimitive = string | number | boolean | bigint | symbol | null | undefined;

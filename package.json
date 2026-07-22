@@ -1,5 +1,5 @@
 {
-  "name": "solid-signal-store",
+  "name": "@adsq/solid-signal-store",
   "version": "0.1.0",
   "description": "Premium, minimal SolidJS port of the rich reactive store engine (full API parity, dramatically simpler reactivity)",
   "repository": {
@@ -74,21 +74,21 @@
   },
   "peerDependencies": {
     "solid-js": ">=1.8.0 <2.0.0",
-    "jsnq": "^0.1.0"
+    "@adsq/jsnq": "^0.1.0"
   },
   "devDependencies": {
-    "jsnq": "^0.1.0",
     "@playwright/test": "^1.60.0",
     "solid-js": "1.9.14",
     "tsx": "^4.0.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "@adsq/jsnq": "^0.1.0"
   },
   "keywords": [
     "solidjs",
     "reactive",
     "store",
     "proxy",
-    "jsnq"
+    "@adsq/jsnq"
   ],
   "license": "MIT"
 }
