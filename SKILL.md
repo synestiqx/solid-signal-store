@@ -1,5 +1,5 @@
 ---
-name: @adsq/solid-signal-store
+name: solid-signal-store
 description: Use @adsq/solid-signal-store to build SolidJS state as a callable nested proxy — reads like store.user.name(), writes like store.user.name = 'Ada', with fine-grained per-path wake and JSNQ queries over arrays. Use when writing or reviewing Solid components, JSX, or stores in a project that depends on @adsq/solid-signal-store, and when building live-editing UIs such as slider-driven design tools.
 ---
 

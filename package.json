@@ -1,6 +1,6 @@
 {
   "name": "@adsq/solid-signal-store",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Fine-grained SolidJS store with a callable nested proxy API: reads like store.user.name(), writes like ordinary assignment, and wakes only the paths a component actually consumes.",
   "repository": {
     "type": "git",
