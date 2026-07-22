@@ -2,7 +2,7 @@
  * store-solid — SolidJS port of the reactive store engine.
  * Full API parity with original, dramatically simpler reactivity layer thanks to Solid.
  * 
- * See PLAN.md v2 (post-Critic) for architecture, contracts, and "do samego końca" rules.
+ * See README.md for the public API, contracts, and architecture overview.
  */
 
 // Core

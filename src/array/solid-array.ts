@@ -3,7 +3,7 @@
 // Delivers full fluent API parity + direct method semantics (different return values).
 // Zero duplication of proxy/SolidStore logic. Queries use native on snapshot.
 // Mutations always COW + batch + commit. Predicate-or-value sugar only in fluent.
-// Clean, small, per PLAN.md v2 (hardened) + Critic rules. Single source for arrays.
+// Single source of truth for array behaviour: small, dependency-free, no duplicated path logic.
 
 export interface ArrayMutator {
   read(path: string): unknown;

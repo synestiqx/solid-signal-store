@@ -3,7 +3,7 @@
  * Wires createSolidProxy + narrow StoreMutator. Real in-memory root.
  * Jsnq bridge dispatch for mutate/pipe (future solid-pipeline-bridge).
  * Full public surface, headless/vanilla, batch(), zero logic dupe (proxy/bridge own theirs).
- * Per PLAN.md v2 + Critic: minimal, clean, contracts (proxy identity, prefetch, root key-diff, dev shapes, cleanup).
+ * Minimal and contract-driven: proxy identity, cursor prefetch, root key-diff, devtools event shapes, GC cleanup.
  */
 
 import { batch, createMemo, type Accessor } from 'solid-js';
@@ -187,7 +187,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   // --- Path orchestration (delegates to unified internal primitives) ---
   // Eliminates previous inline duplication. Root (empty path) semantics preserved.
   // All core files (bridge, SolidStore, PathUtils, proxy) delegate to src/internal/path.ts
-  // as the clear single source of truth (SST) for simple path logic — unification COMPLETE (Critic P0 + micro-walk P1).
+  // as the single source of truth (SST) for simple path logic.
 
   #clone(v: any): any {
     return cloneJsonData(v);
@@ -608,7 +608,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     return live;
   }
 
-  // Fluent array entry — clean top-level wiring to dedicated layer (per PLAN v2 + Critic)
+  // Fluent array entry — top-level wiring to the dedicated array layer.
   array(path: string, ...args: any[]): any {
     const p = path || (args[0] ?? '');
     return createArrayChain(p, {

@@ -1,7 +1,7 @@
 /**
  * Minimal, self-contained PathUtils for store-solid (retained for API surface + isValid*).
  * Core primitives delegated to THE single source of truth: src/internal/path.ts
- * (Critic P0 path logic unification — COMPLETE; no simple path dupe remains in core files).
+ * Single source of truth for path parsing: core files must not re-implement simple path logic.
  * Proxy/bridge/SolidStore import directly from internal/path; this is the thin adapter.
  * isValid* are local (intentionally permissive). No caching.
  */

@@ -1,9 +1,17 @@
 node_modules/
 *.tsbuildinfo
-dist/
 test-results/
 playwright-report/
 examples/browser-demo/node_modules/
 examples/browser-demo/dist/
 examples/browser-demo/package-lock.json
 examples/browser-demo/vite.config.ts.timestamp-*.mjs
+
+# wewnetrzne notatki robocze (zostaja lokalnie, nie trafiaja do repo)
+ITERATION-*.md
+UNIFICATION-*.md
+WHOLE-ENGINE-*.md
+BRIDGE-MINIMALISM-PROPOSAL.md
+PLAN.md
+jsnq-optimization-status.md
+ARCHITECTURE.md
