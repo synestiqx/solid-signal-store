@@ -1,6 +1,6 @@
 {
   "name": "@adsq/solid-signal-store",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Premium, minimal SolidJS port of the rich reactive store engine (full API parity, dramatically simpler reactivity)",
   "repository": {
     "type": "git",
@@ -88,7 +88,7 @@
     "reactive",
     "store",
     "proxy",
-    "@adsq/jsnq"
+    "jsnq"
   ],
   "license": "MIT"
 }
