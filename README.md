@@ -39,6 +39,55 @@ store.user.tags.pop();
 store.dashboard.tiles = store.dashboard.tiles() + 1;
 ```
 
+## In JSX
+
+The proxy reads the same way inside a component. No signal wiring, no store selector:
+
+```tsx
+function Dashboard() {
+  const { store } = createSolidStore({
+    user: { name: 'Ann', tags: ['admin'] },
+    dashboard: { tiles: 12 },
+    services: [{ name: 'api', rps: 120 }],
+  }, 'dashboard');
+
+  return (
+    <>
+      <h1>{store.user.name()}</h1>
+      <p>{store.dashboard.tiles()} tiles</p>
+
+      <For each={store.user.tags()}>{(tag: string) =>
+        <span class="tag">{tag}</span>
+      }</For>
+
+      <For each={store.services()}>{(service: any) =>
+        <div class="row">
+          <strong>{service.name}</strong>
+          <span>{service.rps}</span>
+        </div>
+      }</For>
+
+      <button onClick={() => store.dashboard.tiles = store.dashboard.tiles() + 1}>
+        Add tile
+      </button>
+    </>
+  );
+}
+```
+
+Three rules cover every component:
+
+- **A leaf is called**: `{store.user.name()}`. The call is the reactive read, so Solid
+  tracks that exact path and updates only the text node bound to it.
+- **An array is called to iterate it**, then each item is a plain value read without
+  parentheses: `<For each={store.services()}>` then `{service.name}`. Items are snapshots,
+  not nested accessors.
+- **`length` is reactive without a call**: `{store.history.length}` tracks pushes and pops
+  without materialising the array.
+
+Writes are ordinary assignments, so an event handler is a one-liner. Wrap several related
+writes in `api.batch()` when they must land as one update.
+
 Nested keys may be created dynamically:
 
 ```ts
