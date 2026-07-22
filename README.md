@@ -5,9 +5,17 @@ Fine-grained SolidJS store with a callable proxy API and optional JSNQ/devtools 
 ## Install
 
 ```sh
-npm install solid-js @adsq/jsnq @adsq/solid-signal-store
+npm install solid-js @adsq/solid-signal-store
 # or
-bun add solid-js @adsq/jsnq @adsq/solid-signal-store
+bun add solid-js @adsq/solid-signal-store
+```
+
+`@adsq/jsnq` is a peer dependency, so npm and bun install it for you. Declare it in your
+own `package.json` as well when the application imports JSNQ operators directly, so that
+strict installers such as pnpm and Yarn PnP resolve those imports:
+
+```sh
+npm install @adsq/jsnq
 ```
 
 Solid `>=1.8 <2` and `@adsq/jsnq` are peer dependencies, so the application supplies one framework runtime. The test matrix covers the minimum supported Solid line and current Solid 1.9.
