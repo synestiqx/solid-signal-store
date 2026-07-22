@@ -6,7 +6,8 @@
  */
 
 // Core
-export { SolidStore, createSolidStore, useSolidStore, onSolidDevAction } from './core/SolidStore';
+export { SolidStore, createSolidStore, useSolidStore, waitForStore, onSolidDevAction } from './core/SolidStore';
+export type { WaitForStoreOptions } from './core/SolidStore';
 
 // Proxy (for advanced wiring / testing)
 export { createSolidProxy } from './proxy/solid-proxy';
@@ -16,12 +17,15 @@ export type { StoreMutator, SolidProxyOptions, SolidWakeMode } from './proxy/sol
 export { createProjectionObservable } from './core/rx-interop';
 
 // Re-export key types for convenience
-export type { SolidStoreOptions, StoreDevToolsAction } from './core/SolidStore';
+export type { SolidStoreOptions } from './core/SolidStore';
 export type { SolidStoreProxy, StoreArray, StoreLeaf, SolidStoreReactivity, SolidProxyMetrics } from './core/proxy-types';
-
-// Devtools stream service (parity with Angular DevService)
-export { SolidDevService } from './core/dev-service';
-export type { DevStream, DevToolsEvent, ProxyMetrics } from './core/dev-service';
+export type {
+  DevStream,
+  DevToolsEvent,
+  ProxyMetrics,
+  SolidDevtoolsAdapter,
+  StoreDevToolsAction,
+} from './core/devtools-contract';
 
 // Internal utilities (for advanced use / future extensions)
 export * as InternalPath from './internal/path';

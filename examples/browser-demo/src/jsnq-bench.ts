@@ -1,8 +1,8 @@
-import { createSolidStore } from 'store-solid';
-import 'store-solid/jsondb';
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
-import deleteKey from '@synestiqx/jsondb/operators/deleteKey';
+import { createSolidStore } from 'solidstore';
+import 'solidstore/jsnq';
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
+import deleteKey from '@synestiqx/jsnq/operators/deleteKey';
 
 type BenchResult = {
   name: string;
@@ -45,7 +45,7 @@ const api = createSolidStore(
     deleteRows: makeRows(10000),
     deep: makeDeep(),
   },
-  'jsondb-browser-bench'
+  'jsnq-browser-bench'
 );
 const store = api.store as any;
 
@@ -148,18 +148,18 @@ function runBench(): BenchResult[] {
 }
 
 try {
-  console.log('Starting real jsondb browser benchmark...');
+  console.log('Starting real jsnq browser benchmark...');
   const results = runBench();
   for (const r of results) {
     console.log(`${r.name}: total=${r.totalMs}ms avg=${r.avgMs}ms ops=${r.ops} ok=${r.ok} ${r.detail}`);
   }
   render(results);
-  (window as any).__JSONDB_BENCH_RESULTS = results;
-  document.title = results.every((r) => r.ok) ? 'jsondb-bench-complete' : 'jsondb-bench-failed';
+  (window as any).__JSNQ_BENCH_RESULTS = results;
+  document.title = results.every((r) => r.ok) ? 'jsnq-bench-complete' : 'jsnq-bench-failed';
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
-  console.error('jsondb browser benchmark failed:', message);
+  console.error('jsnq browser benchmark failed:', message);
   resultsEl.innerHTML = `<div class="fail">${message}</div>`;
-  (window as any).__JSONDB_BENCH_ERROR = message;
-  document.title = 'jsondb-bench-failed';
+  (window as any).__JSNQ_BENCH_ERROR = message;
+  document.title = 'jsnq-bench-failed';
 }

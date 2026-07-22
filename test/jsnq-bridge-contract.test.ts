@@ -1,7 +1,7 @@
 /**
- * jsondb-bridge-contract.test.ts
+ * jsnq-bridge-contract.test.ts
  *
- * Contract net for the Solid jsondb bridge + store mutate surface, written BEFORE
+ * Contract net for the Solid jsnq bridge + store mutate surface, written BEFORE
  * the precise-wake / mutation-metadata work so any later refactor is proven to
  * preserve today's observable behaviour and public API.
  *
@@ -15,24 +15,24 @@
  *     consumers wake, and $liveQuery recomputes. These are the invariants that
  *     MUST hold regardless of how granular the wake becomes.
  *
- * Run: bun --conditions browser test/jsondb-bridge-contract.test.ts
+ * Run: bun --conditions browser test/jsnq-bridge-contract.test.ts
  */
 import { createRoot, createEffect } from 'solid-js';
-import { applyPipelineMutation } from '../src/jsondb/solid-pipeline-bridge';
+import { applyPipelineMutation } from '../src/jsnq/solid-pipeline-bridge';
 import { createSolidStore } from '../src';
-import '../src/jsondb'; // global bridge registration for $mutate / $liveQuery
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
-import replace from '@synestiqx/jsondb/operators/replace';
-import mergeUpdate from '@synestiqx/jsondb/operators/mergeUpdate';
-import deleteKey from '@synestiqx/jsondb/operators/deleteKey';
-import deleteElement from '@synestiqx/jsondb/operators/deleteElement';
-import insert from '@synestiqx/jsondb/operators/insert';
-import insertTo from '@synestiqx/jsondb/operators/insertTo';
-import moveTo from '@synestiqx/jsondb/operators/moveTo';
-import copyTo from '@synestiqx/jsondb/operators/copyTo';
-import moveToMatches from '@synestiqx/jsondb/operators/moveToMatches';
-import copyToAll from '@synestiqx/jsondb/operators/copyToAll';
+import '../src/jsnq'; // global bridge registration for $mutate / $liveQuery
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
+import replace from '@synestiqx/jsnq/operators/replace';
+import mergeUpdate from '@synestiqx/jsnq/operators/mergeUpdate';
+import deleteKey from '@synestiqx/jsnq/operators/deleteKey';
+import deleteElement from '@synestiqx/jsnq/operators/deleteElement';
+import insert from '@synestiqx/jsnq/operators/insert';
+import insertTo from '@synestiqx/jsnq/operators/insertTo';
+import moveTo from '@synestiqx/jsnq/operators/moveTo';
+import copyTo from '@synestiqx/jsnq/operators/copyTo';
+import moveToMatches from '@synestiqx/jsnq/operators/moveToMatches';
+import copyToAll from '@synestiqx/jsnq/operators/copyToAll';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -61,6 +61,25 @@ function testFlatUpdateCow(): void {
   assert(input[0].score === 10, 'input matched item NOT mutated (COW clone)');
   assert(out[1] === input[1], 'unmatched item aliased by reference (no needless clone)');
   assert(out !== input, 'output is a fresh outer array');
+}
+
+function testMissingBridgeFailsExplicitly(): void {
+  const globals = globalThis as any;
+  const savedInternal = globals.__SOLID_PIPELINE_BRIDGE;
+  const savedPublic = globals.solidJsnqBridge;
+  delete globals.__SOLID_PIPELINE_BRIDGE;
+  delete globals.solidJsnqBridge;
+  try {
+    const api = createSolidStore({ users: flatUsers() } as any, 'contract_missing_bridge');
+    let threw = false;
+    try { api.store.users.$mutate(where('id', '===', 1), update('name', 'Ada')); }
+    catch (error) { threw = String(error).includes("Import 'solidstore/jsnq'"); }
+    assert(threw, 'missing optional bridge throws an actionable error');
+    api.destroy();
+  } finally {
+    globals.__SOLID_PIPELINE_BRIDGE = savedInternal;
+    globals.solidJsnqBridge = savedPublic;
+  }
 }
 
 // --- 2. mergeUpdate + deleteKey on the same matched set ---
@@ -248,6 +267,7 @@ function testLiveQueryAfterMutate(): void {
 }
 
 testFlatUpdateCow();
+testMissingBridgeFailsExplicitly();
 testMergeAndDeleteKey();
 testUpdateByKey();
 testMoveMatches();
@@ -268,11 +288,16 @@ async function testPreciseMutationWake(): Promise<void> {
         let changedRuns = 0; let changedVal: unknown;
         let unchangedRuns = 0;
         let arrayRuns = 0;
+        let itemRuns = 0;
+        let untouchedNestedRuns = 0;
         createEffect(() => { changedVal = store.users[0].name(); changedRuns++; });
         createEffect(() => { store.users[2].name(); unchangedRuns++; });
         createEffect(() => { const a = store.users() as unknown[]; void a.length; arrayRuns++; });
+        createEffect(() => { store.users[0](); itemRuns++; });
+        createEffect(() => { store.users[0].meta(); untouchedNestedRuns++; });
         await flush();
         const baseChanged = changedRuns; const baseUnchanged = unchangedRuns; const baseArray = arrayRuns;
+        const baseItem = itemRuns; const baseUntouchedNested = untouchedNestedRuns;
         assert(baseChanged === 1 && changedVal === 'Ann', 'precise: changed-leaf effect initial');
 
         store.users.$mutate(where('id', '===', 1), update('name', 'Ada'));
@@ -280,7 +305,9 @@ async function testPreciseMutationWake(): Promise<void> {
 
         assert(store.users[0].name() === 'Ada', 'precise: value committed');
         assert(changedRuns > baseChanged && changedVal === 'Ada', 'precise: changed leaf woke with new value');
+        assert(itemRuns > baseItem, 'precise: changed item consumer woke');
         assert(unchangedRuns === baseUnchanged, `precise: UNCHANGED sibling did NOT wake (extra=${unchangedRuns - baseUnchanged})`);
+        assert(untouchedNestedRuns === baseUntouchedNested, 'precise: untouched nested branch stayed asleep');
         assert(arrayRuns > baseArray, 'precise: whole-array consumer still woke via branch signal');
 
         // liveQuery must still recompute under precise wake
@@ -305,4 +332,4 @@ await testPreciseMutationWake();
 await testStoreMutateReactivity();
 testLiveQueryAfterMutate();
 
-console.log('All jsondb bridge + store mutate contract tests passed.');
+console.log('All jsnq bridge + store mutate contract tests passed.');

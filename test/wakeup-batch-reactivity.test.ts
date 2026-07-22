@@ -169,12 +169,40 @@ function runBranchMutationScenario() {
   });
 }
 
+function runWholeBranchReplacementScenario() {
+  return createRoot((dispose) => {
+    const api = createSolidStore(createState(), 'solid_whole_branch_replacement');
+    const store = api.store as any;
+    api.wakeUp('grained');
+
+    let runs = 0;
+    const label = createMemo(() => {
+      runs++;
+      return store.menu.fields[0].label();
+    });
+
+    assert(label() === 'Dashboard', 'whole branch: initial leaf');
+    const before = runs;
+    store.menu.fields = [
+      { id: 'dashboard-reset', label: 'Dashboard Reset', fields: [] },
+      { id: 'settings-reset', label: 'Settings Reset', fields: [] },
+    ];
+
+    assert(label() === 'Dashboard Reset', 'whole branch: observed descendant follows array replacement');
+    assert(runs - before === 1, `whole branch: descendant should recompute once, got ${runs - before}`);
+
+    dispose();
+    return { replacementDelta: runs - before };
+  });
+}
+
 const grained = runWakeScenario('grained');
 const container = runWakeScenario('container');
 const batch = runBatchScenario();
 const targetedGrained = runTargetedWakeScenario('grained');
 const targetedLeaf = runTargetedWakeScenario('leaf');
 const branchMutation = runBranchMutationScenario();
+const wholeBranchReplacement = runWholeBranchReplacementScenario();
 
 console.log('solid-wakeup-reactivity:', grained);
 console.log('solid-wakeup-reactivity:', container);
@@ -182,4 +210,5 @@ console.log('solid-batch-reactivity:', batch);
 console.log('solid-targeted-wakeup:', targetedGrained);
 console.log('solid-targeted-wakeup:', targetedLeaf);
 console.log('solid-branch-mutation-wakeup:', branchMutation);
+console.log('solid-whole-branch-replacement:', wholeBranchReplacement);
 console.log('All solid wakeup/batch reactivity tests passed.');

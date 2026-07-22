@@ -1,6 +1,6 @@
 # Iteration Progress — Granularity + Whole-Engine Contracts (Scheduled Run)
 
-**Focus:** Balanced whole-engine work (reactivity layer + verification) per user emphasis on "cały silnik nie tylko jsondb".
+**Focus:** Balanced whole-engine work (reactivity layer + verification) per user emphasis on "cały silnik nie tylko jsnq".
 
 ## Concrete Deliverables
 
@@ -26,12 +26,12 @@
 - Zero regression. The change is safe and incremental.
 
 ### 4. Documentation
-- Updated `jsondb-optimization-status.md` with this iteration's progress.
+- Updated `jsnq-optimization-status.md` with this iteration's progress.
 - This file created as a focused record of the granularity + contract work.
 
 ## Relation to Project Goals
 - Directly advances "premium whole engine" (lighter, more Solid-native tracking + rigorous verification of subtle contracts from PLAN Appendix A/B).
-- Complements prior jsondb/10k-scale/browser work.
+- Complements prior jsnq/10k-scale/browser work.
 - Moves us closer to the original vision from `solidjs.md` (dramatically simpler reactivity by leaning on Solid signals + automatic tracking) while respecting all hard constraints (API, performance, granular renders, correct parent/child effect semantics).
 
 Next natural steps (from auditor + current trajectory):

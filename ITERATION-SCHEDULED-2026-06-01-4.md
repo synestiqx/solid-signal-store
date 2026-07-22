@@ -8,17 +8,17 @@
 - benchmark: all 10 PASS (large-flat-delete-many ~5.65-7ms; RingBuffer microbench continues to show 8-17x win in logger path)
 - verify.ts: full PASS (granularity grained=1 vs container=3 + dev shapes + all contracts)
 
-**Dispatch audit (quick grep on non-verbatim layers):** Clean. No raw switches/ifs remaining in mutate/pipe/bridge/array dispatch paths. All routed through named helpers/tables (getJsondbBridge, applyArrayMutation, isArray*Method, warnOnce, etc.). Max wydajność state preserved.
+**Dispatch audit (quick grep on non-verbatim layers):** Clean. No raw switches/ifs remaining in mutate/pipe/bridge/array dispatch paths. All routed through named helpers/tables (getJsnqBridge, applyArrayMutation, isArray*Method, warnOnce, etc.). Max wydajność state preserved.
 
 ## Local Playwright Verification (major concrete progress)
 - `bun run test:browser` executed (now unblocked by the prior logger import fix to the existing `'store-solid'` Vite alias).
-- Result: 2 passed, 1 unrelated jsondb data assert failure (deepSubsLen — pre-pure in suite flow).
+- Result: 2 passed, 1 unrelated jsnq data assert failure (deepSubsLen — pre-pure in suite flow).
 - **Full suite reached step 12/12 ✓** and executed the observer-added + refined wakeUp grained/container on xlarge (10k) + pure reactivity path cleanly.
 - Fresh artifacts generated (via error-context + failure screenshot):
   - Explicit PURE REACTIVITY log captured: `"wakeUp grained/container exercised on xlarge (large dataset)"`
   - Page YAML snapshot shows the pure-reactivity-panel (with separate "WakeUp grained:" / "container:" indicators) + live logs panel + "Suite step: 12/12 ✓" + suite-complete marker
   - DEMO: prefixed console output visible in test runner
-- Subagent (read-only browser-verification reviewer) spawned: confirmed strong evidence strength for the feature in actual Playwright runs (separate hooks + dedicated panel + precise asserts + logs). The current failure is orthogonal (jsondb data assert). Suggested one tiny premium improvement: isolate the pure reactivity verification (wakeUp grained/container on xlarge + three hooks + dedicated screenshots + log asserts) into its own `test.step(...)` or separate test. This makes the "logs + screenshots" verification non-flaky and independently robust.
+- Subagent (read-only browser-verification reviewer) spawned: confirmed strong evidence strength for the feature in actual Playwright runs (separate hooks + dedicated panel + precise asserts + logs). The current failure is orthogonal (jsnq data assert). Suggested one tiny premium improvement: isolate the pure reactivity verification (wakeUp grained/container on xlarge + three hooks + dedicated screenshots + log asserts) into its own `test.step(...)` or separate test. This makes the "logs + screenshots" verification non-flaky and independently robust.
 
 The import fix + this run directly advances the "weryfikacja przez Playwright z logami i screenami" goal for the core engine wakeup feature on larger data. When the demo loads cleanly, evidence is captured end-to-end in Playwright artifacts (as designed).
 

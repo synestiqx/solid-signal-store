@@ -1,6 +1,6 @@
 # Iteration 2026-06-02-12 — SST Purity + Strengthened Playwright WakeUp Evidence
 
-**Prompt executed:** Recurring scheduled task verbatim. Premium whole-engine completion focus: dispatch purity, zero dupe, solid tests on edges, Playwright logs + dedicated screenshots, Bun, full parity, max jsondb opt in bridge only, subagents when helpful, concrete progress each iteration, no user questions.
+**Prompt executed:** Recurring scheduled task verbatim. Premium whole-engine completion focus: dispatch purity, zero dupe, solid tests on edges, Playwright logs + dedicated screenshots, Bun, full parity, max jsnq opt in bridge only, subagents when helpful, concrete progress each iteration, no user questions.
 
 **This iteration:** Targeted hygiene (dead SST import) + minimal expansion of the isolated pure-reactivity verification (new focused panel artifact for wakeUp grained/container indicators). Directly strengthens the premium evidence surface emphasized in prior iterations.
 
@@ -8,14 +8,14 @@
 - verify:sync ✅
 - verify.ts (granularity grained=1 exact leaf / container=3 + all contracts) ✅
 - core patterns 6/6 ✅
-- jsondb-benchmark (large-flat-delete-many ~4.3ms on dispatch-refactored 10k path, Ring 11.86x, Proxy Heavy clean) ✅
+- jsnq-benchmark (large-flat-delete-many ~4.3ms on dispatch-refactored 10k path, Ring 11.86x, Proxy Heavy clean) ✅
 - isolated pure-reactivity Playwright (wakeUp grained/container on xlarge + 3 hooks + "PURE REACTIVITY" log + dedicated full-page artifact) ✅ (8.9s)
-- Artifact baseline: `test-results/jsondb-pure-reactivity-isolated.png` (fresh)
+- Artifact baseline: `test-results/jsnq-pure-reactivity-isolated.png` (fresh)
 
 ## Dispatch + Duplication Re-Audit (post prior bridge work)
 - Zero switches in any non-verbatim layer.
 - Bridge (after ACTION_HANDLERS + ensureFirstClone + SAFE sets + getParentSegments): clean lookup in hot 10k path; only early root guards remain (acceptable).
-- SolidStore: already excellent dispatch (uses shared ARRAY_* sets + applyArrayMutation; extracted getJsondbBridge + warnOnce; wakeUp tiny normalization; heavy SST delegation via resolveParentAndKey / getByPath etc.).
+- SolidStore: already excellent dispatch (uses shared ARRAY_* sets + applyArrayMutation; extracted getJsnqBridge + warnOnce; wakeUp tiny normalization; heavy SST delegation via resolveParentAndKey / getByPath etc.).
 - One precise miss found: dead `splitPath` import in SolidStore (imported but 0 usages anywhere in file; all path work on SST primitives).
 - Browser isolated test: strong for wakeUp on xlarge/array/deep, but only 1 artifact (full page). Opportunity for tiny focused panel screenshot step (precedent exists in same file for card/panel shots).
 
@@ -27,7 +27,7 @@
   - 2 ranked PROCEED items only (extremely conservative filter applied).
 
 **Rank 1 (SST/dispatch purity + czysty minimalny kod):** Remove unused `splitPath` from SolidStore.ts:16 import.
-**Rank 2 (solidne testy + Playwright evidence):** Add guarded `.pure-reactivity-panel` locator screenshot step inside the isolated test (new artifact `jsondb-pure-reactivity-wake-panel-isolated.png` showing the exact grained/container ✓ indicators + stats after xlarge array + deep exercise).
+**Rank 2 (solidne testy + Playwright evidence):** Add guarded `.pure-reactivity-panel` locator screenshot step inside the isolated test (new artifact `jsnq-pure-reactivity-wake-panel-isolated.png` showing the exact grained/container ✓ indicators + stats after xlarge array + deep exercise).
 
 Both zero-risk, zero behavior change, fully covered by existing gates + browser runs.
 
@@ -38,7 +38,7 @@ Both zero-risk, zero behavior change, fully covered by existing gates + browser 
      ```ts
      const purePanel = page.locator('.pure-reactivity-panel');
      if ((await purePanel.count()) > 0) {
-       await purePanel.screenshot({ path: 'test-results/jsondb-pure-reactivity-wake-panel-isolated.png' });
+       await purePanel.screenshot({ path: 'test-results/jsnq-pure-reactivity-wake-panel-isolated.png' });
      }
      ```
    - Produces dedicated visual evidence of the wakeUp grained/container UI panel (with the PURE REACTIVITY log lines and indicators) without any new asserts, waits, or flakiness.
@@ -48,8 +48,8 @@ Both zero-risk, zero behavior change, fully covered by existing gates + browser 
 - core patterns 6/6 ✅
 - `bun run test:browser --grep "isolated pure reactivity"` → 1 passed (9.8s)
   - **Two fresh dedicated artifacts** (2026-06-01 14:14):
-    - `test-results/jsondb-pure-reactivity-isolated.png` (full page, 158kB)
-    - `test-results/jsondb-pure-reactivity-wake-panel-isolated.png` (focused panel, 20kB) — new high-signal evidence for the wake feature on xlarge/array/deep
+    - `test-results/jsnq-pure-reactivity-isolated.png` (full page, 158kB)
+    - `test-results/jsnq-pure-reactivity-wake-panel-isolated.png` (focused panel, 20kB) — new high-signal evidence for the wake feature on xlarge/array/deep
 - No other files touched; dispatch purity and bridge hot-path performance unchanged.
 
 ## Evidence Toward "Naprawdę Gotowa i Wysokiej Jakości"
@@ -59,7 +59,7 @@ Both zero-risk, zero behavior change, fully covered by existing gates + browser 
 - Whole-engine contracts (proxy identity, prefetch, computedOf, array fluent, root replace, null/undef edges, 10k paths) continue to be exercised and green on every gate.
 
 **Subagent id:** 019e8317-6ff2-7ed0-9564-60a54f3d3e0f  
-**Key artifacts:** test-results/jsondb-pure-reactivity-isolated.png + jsondb-pure-reactivity-wake-panel-isolated.png (both fresh)  
+**Key artifacts:** test-results/jsnq-pure-reactivity-isolated.png + jsnq-pure-reactivity-wake-panel-isolated.png (both fresh)
 **Lines changed:** SolidStore.ts:16 (1-line hygiene); store-reactivity.spec.ts ~402-408 (7-line guarded evidence step)  
 **Status:** Concrete, gated, zero-risk progress on dispatch purity + test evidence. Engine + verification at high premium level. Ready for next scheduled iteration.
 

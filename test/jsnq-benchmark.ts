@@ -1,7 +1,7 @@
 /**
- * jsondb-benchmark.ts
+ * jsnq-benchmark.ts
  * 
- * Comprehensive testing + micro-benchmark for the jsondb bridge in store-solid.
+ * Comprehensive testing + micro-benchmark for the jsnq bridge in store-solid.
  * 
  * Tests across:
  * - Flat structures
@@ -12,15 +12,15 @@
  * Uses Bun for best performance.
  * 
  * Run:
- *   bun test/jsondb-benchmark.ts
+ *   bun test/jsnq-benchmark.ts
  */
 
-import { applyPipelineMutation } from '../src/jsondb/solid-pipeline-bridge';
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
-import insert from '@synestiqx/jsondb/operators/insert';
-import deleteKey from '@synestiqx/jsondb/operators/deleteKey';
-import replace from '@synestiqx/jsondb/operators/replace';
+import { applyPipelineMutation } from '../src/jsnq/solid-pipeline-bridge';
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
+import insert from '@synestiqx/jsnq/operators/insert';
+import deleteKey from '@synestiqx/jsnq/operators/deleteKey';
+import replace from '@synestiqx/jsnq/operators/replace';
 
 type TestCase = {
   name: string;
@@ -124,7 +124,7 @@ const testCases: TestCase[] = [
 ];
 
 function runBenchmark() {
-  console.log('=== jsondb Bridge Benchmark (Solid-optimized path) ===\n');
+  console.log('=== jsnq Bridge Benchmark (Solid-optimized path) ===\n');
 
   for (const tc of testCases) {
     const start = performance.now();

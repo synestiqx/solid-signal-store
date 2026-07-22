@@ -2,6 +2,12 @@
   "name": "solidstore",
   "version": "0.1.0",
   "description": "Premium, minimal SolidJS port of the rich reactive store engine (full API parity, dramatically simpler reactivity)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/synestiqx/solidstore.git"
+  },
+  "homepage": "https://github.com/synestiqx/solidstore#readme",
+  "bugs": "https://github.com/synestiqx/solidstore/issues",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,28 +16,37 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./jsondb": {
-      "import": "./dist/jsondb.js",
-      "types": "./dist/jsondb.d.ts"
+    "./jsnq": {
+      "import": "./dist/jsnq.js",
+      "types": "./dist/jsnq.d.ts"
     },
-    "./jsondb/*": {
-      "import": "./dist/jsondb/*.js",
-      "types": "./dist/jsondb/*.d.ts"
-    }
+    "./devtools": {
+      "import": "./dist/devtools.js",
+      "types": "./dist/devtools.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "sideEffects": [
-    "./dist/jsondb.js"
+    "./dist/jsnq.js"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && node scripts/fix-dist-esm-extensions.mjs",
+    "dev": "bun run --cwd examples/browser-demo dev",
+    "demo:install": "bun install --cwd examples/browser-demo",
+    "build": "node scripts/clean-dist.mjs && tsc && node scripts/fix-dist-esm-extensions.mjs",
     "typecheck": "tsc --noEmit",
-    "prepack": "bun run build",
-    "test": "bun run test:types && bun run test:array-methods && bun run test:proxy-delete && bun run test:wakeup-batch && bun run test:select-observable && bun run test:nested-tree-batch && bun run test:nestable-cms && bun run test:store-component-flow && bun run test:store-board-wakeup && bun run test:deep-proxy-jsondb && bun run test:livequery && bun run test:bridge-contract && bun run test:array-splice-precise",
+    "prepack": "npm run build",
+    "test": "bun run test:types && bun run test:array-methods && bun run test:proxy-delete && bun run test:wakeup-batch && bun run test:select-observable && bun run test:devtools-stream && bun run test:wait-for-store && bun run test:lifecycle && bun run test:nested-tree-batch && bun run test:nestable-cms && bun run test:store-component-flow && bun run test:store-board-wakeup && bun run test:deep-proxy-jsnq && bun run test:livequery && bun run test:bridge-contract && bun run test:array-splice-precise",
     "verify": "bunx tsx verify.ts",
     "demo": "bunx tsx demo.ts",
     "bench:splice-precise": "bun --conditions browser test/splice-precise-bench.ts",
     "bench:recursive-models": "bun test/recursive-models-compare.ts",
     "bench:native": "bun --conditions browser test/native-vs-store-bench.ts",
+    "bench:store": "bun --conditions browser test/store-throughput-bench.ts",
     "test:types": "tsc --noEmit --strict --target ES2022 --module ESNext --moduleResolution bundler --lib ES2022,DOM --skipLibCheck test/types-proxy-contract.ts",
     "test:path-core": "bun test/path-core-parity.test.ts",
     "test:path-utils-public": "bun test/path-utils-public-api.test.ts",
@@ -39,29 +54,32 @@
     "test:proxy-delete": "bun --conditions browser test/proxy-delete-semantics.test.ts",
     "test:wakeup-batch": "bun --conditions browser test/wakeup-batch-reactivity.test.ts",
     "test:select-observable": "bun --conditions browser test/select-observable-reactivity.test.ts",
+    "test:devtools-stream": "bun --conditions browser test/devtools-stream-contract.test.ts",
+    "test:wait-for-store": "bun --conditions browser test/wait-for-store.test.ts",
+    "test:lifecycle": "bun --conditions browser test/store-lifecycle.test.ts",
     "test:nested-tree-batch": "bun --conditions browser test/nested-tree-batch.test.ts",
     "test:nestable-cms": "bun --conditions browser test/nestable-cms-modes.test.ts",
     "test:store-component-flow": "bun --conditions browser test/store-component-flow.test.ts",
     "test:store-board-wakeup": "bun --conditions browser test/store-board-wakeup-contract.test.ts",
-    "test:livequery": "bun --conditions browser test/livequery-jsondb.test.ts",
-    "test:deep-proxy-jsondb": "bun --conditions browser test/deep-proxy-jsondb-flow.test.ts",
+    "test:livequery": "bun --conditions browser test/livequery-jsnq.test.ts",
+    "test:deep-proxy-jsnq": "bun --conditions browser test/deep-proxy-jsnq-flow.test.ts",
     "browser-demo:install": "bun install --cwd examples/browser-demo",
-    "browser-demo:dev": "cd examples/browser-demo && bun run dev",
-    "browser-demo:build": "bun --cwd examples/browser-demo run build",
+    "browser-demo:dev": "bun run --cwd examples/browser-demo dev",
+    "browser-demo:build": "bun run --cwd examples/browser-demo build",
     "test:browser": "bun run browser-demo:install && bunx playwright test",
     "test:browser:ui": "bun run browser-demo:install && bunx playwright test --ui",
     "install:browsers": "bunx playwright install",
-    "test:bridge-contract": "bun --conditions browser test/jsondb-bridge-contract.test.ts",
+    "test:bridge-contract": "bun --conditions browser test/jsnq-bridge-contract.test.ts",
     "test:array-splice-precise": "bun --conditions browser test/array-splice-precise-wake.test.ts"
   },
   "peerDependencies": {
-    "solid-js": "^1.8.0",
-    "@synestiqx/jsondb": "^0.1.0"
+    "solid-js": ">=1.8.0 <2.0.0",
+    "@synestiqx/jsnq": "^0.1.0"
   },
   "devDependencies": {
-    "@synestiqx/jsondb": "file:../jsondb_git",
+    "@synestiqx/jsnq": "file:../jsnq_git",
     "@playwright/test": "^1.60.0",
-    "solid-js": "^1.8.0",
+    "solid-js": "1.9.14",
     "tsx": "^4.0.0",
     "typescript": "^5.4.0"
   },
@@ -70,6 +88,7 @@
     "reactive",
     "store",
     "proxy",
-    "jsondb"
-  ]
+    "jsnq"
+  ],
+  "license": "MIT"
 }

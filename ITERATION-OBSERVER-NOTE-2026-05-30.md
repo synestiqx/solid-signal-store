@@ -2,20 +2,20 @@
 
 **Role:** Obserwator (Observer/Supervisor) for recurring scheduled iteration.
 **Scope:** Premium completion of entire store-solid engine (proxy, core/SolidStore, array, bridge non-verbatim only, tests, Playwright verification).
-**Mandate honored:** "cały silnik nie tylko jsondb", "no naked logic / max helper reuse", "use handlers + SST (internal/path.ts) + named methods", "use subagents when helps", "solid extensive tests flat/nested/deep/edge", "Playwright with MCP + wakeUp grained/container on larger datasets", "produce iteration note", "never ask human".
+**Mandate honored:** "cały silnik nie tylko jsnq", "no naked logic / max helper reuse", "use handlers + SST (internal/path.ts) + named methods", "use subagents when helps", "solid extensive tests flat/nested/deep/edge", "Playwright with MCP + wakeUp grained/container on larger datasets", "produce iteration note", "never ask human".
 
 ## Quick Inspection Performed (start of iteration)
 - Used list_dir on workspace root, store4/, store4/store-solid/, src/, test/browser/, examples/browser-demo/.
 - read_file on key files: 
-  - WHOLE-ENGINE-PROGRESS-THIS-ITERATION.md, WHOLE-ENGINE-VERIFICATION-GAPS.md, ITERATION-WAKEUP-FULL-ENGINE-HANDLERS.md, ITERATION-PROGRESS-GRANULARITY-AND-CONTRACTS.md, jsondb-optimization-status.md, PLAN.md, ARCHITECTURE.md, README.md
-  - verify.ts (full), src/proxy/solid-proxy.ts (full), src/core/SolidStore.ts (full), src/jsondb/solid-pipeline-bridge.ts (full), src/array/solid-array.ts, src/internal/path.ts (SST), src/index.ts, src/utils/path-utils.ts, src/core/rx-interop.ts
+  - WHOLE-ENGINE-PROGRESS-THIS-ITERATION.md, WHOLE-ENGINE-VERIFICATION-GAPS.md, ITERATION-WAKEUP-FULL-ENGINE-HANDLERS.md, ITERATION-PROGRESS-GRANULARITY-AND-CONTRACTS.md, jsnq-optimization-status.md, PLAN.md, ARCHITECTURE.md, README.md
+  - verify.ts (full), src/proxy/solid-proxy.ts (full), src/core/SolidStore.ts (full), src/jsnq/solid-pipeline-bridge.ts (full), src/array/solid-array.ts, src/internal/path.ts (SST), src/index.ts, src/utils/path-utils.ts, src/core/rx-interop.ts
   - test/browser/store-reactivity.spec.ts (key sections), examples/browser-demo/src/index.tsx (pure checks + suite)
   - package.json, playwright.config.ts, scripts/sync-*.ts
 - grep for wakeUp/grained/container, imports of path.ts, dead code, operators in bridge, etc.
 - Confirmed: handlers/dispatch tables everywhere in proxy (createDispatchHandler, handleSet etc.), full delegation to SST (getParentPath, resolveParentAndKey, getBy*, splitPath, cloneJson, ensurePathIn etc.) in proxy/core/bridge/utils — zero naked path logic in non-synced. synced/ untouched.
 - LOC budgets respected in spirit (proxy clean, no bloat).
 - Current gaps (from GAPS.md): GC reliable, dev shapes, more computed/select, root isolation, Playwright wakeUp exercise on scale.
-- jsondb benchmark had 1 failing large-deleteKey case (perf + correctness via fallback).
+- jsnq benchmark had 1 failing large-deleteKey case (perf + correctness via fallback).
 
 ## 5 Concrete Micro-Tasks Defined (mix per goals)
 1. **obs-1-cleanup-dead-import** (local by Obserwator): Remove unused `splitPath` import in solid-proxy.ts (post-SST unification). Promotes clean minimal code.
@@ -37,7 +37,7 @@
 
 ## Concrete Measurable Progress This Iteration
 - **Code quality:** 1 dead import removed (proxy now cleaner). Handlers/SST discipline untouched and reinforced.
-- **Bridge (non-verbatim only):** Added delete_key support to ultra-fast where+array path + safe action list. Directly fixes perf/correctness on large-flat-delete-many (10k items). All 10 cases now green, hotpath <6ms. Zero impact on synced/ or other layers. Matches "maximum jsondb optimization only in non-verbatim".
+- **Bridge (non-verbatim only):** Added delete_key support to ultra-fast where+array path + safe action list. Directly fixes perf/correctness on large-flat-delete-many (10k items). All 10 cases now green, hotpath <6ms. Zero impact on synced/ or other layers. Matches "maximum jsnq optimization only in non-verbatim".
 - **Tests/verification:** 
   - verify.ts strengthened for dev shapes (PASS).
   - New wakeup exercise wired into pure reactivity (runs in suite + button).

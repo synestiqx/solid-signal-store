@@ -8,7 +8,7 @@
 - benchmark: all 10 PASS (large-flat-delete-many ~5.65-7ms; RingBuffer microbench continues to show 12-17x win in logger path)
 - verify.ts: full PASS (granularity grained=1 vs container=3 + dev shapes + all contracts)
 
-**Dispatch audit (quick grep on non-verbatim layers):** Clean. No raw switches/ifs remaining in mutate/pipe/bridge/array dispatch paths. All routed through named helpers/tables (getJsondbBridge, applyArrayMutation, isArray*Method, warnOnce, etc.). Max wydajność state preserved.
+**Dispatch audit (quick grep on non-verbatim layers):** Clean. No raw switches/ifs remaining in mutate/pipe/bridge/array dispatch paths. All routed through named helpers/tables (getJsnqBridge, applyArrayMutation, isArray*Method, warnOnce, etc.). Max wydajność state preserved.
 
 ## Local Playwright Verification (major concrete progress)
 - `bun run test:browser` executed (16-46s range across runs). Now **unblocked** by the prior logger import fix (to `'store-solid/utils/ring-buffer'` alias).
@@ -18,7 +18,7 @@
   - Error context + failure screenshot capture the exact PURE REACTIVITY log: "wakeUp grained/container exercised on xlarge (large dataset)"
   - Page YAML snapshot shows the pure-reactivity-panel (with separate "WakeUp grained:" / "container:" indicators) + live logs panel + "Suite step: 12/12 ✓"
   - DEMO: prefixed console output visible in test runner
-- Subagent (read-only browser-verification reviewer) spawned: confirmed strong evidence strength for the feature in actual Playwright runs (hooks + dedicated panel + precise asserts + logs). The current failure is orthogonal (jsondb data assert). Suggested one tiny premium improvement (make panel indicators reactive for live ✓ in screenshots) — noted for future.
+- Subagent (read-only browser-verification reviewer) spawned: confirmed strong evidence strength for the feature in actual Playwright runs (hooks + dedicated panel + precise asserts + logs). The current failure is orthogonal (jsnq data assert). Suggested one tiny premium improvement (make panel indicators reactive for live ✓ in screenshots) — noted for future.
 
 The import fix + this run directly advances the "weryfikacja przez Playwright z logami i screenami" goal for the core engine wakeup feature on larger data.
 

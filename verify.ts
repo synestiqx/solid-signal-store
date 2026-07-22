@@ -121,7 +121,7 @@ function fail(label: string, detail = '') { console.log(`  ❌ ${label}${detail 
   }
 }
 
-// 2. Root key-diff + per-key delete (pure, non-jsondb path)
+// 2. Root key-diff + per-key delete (pure, non-jsnq path)
 {
   const mut3: any = {
     ...mutator,

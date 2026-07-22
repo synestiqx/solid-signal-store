@@ -19,11 +19,11 @@ Poniższe zmiany zostały wprowadzone bezpośrednio na podstawie brutalnej recen
 - **Zakaz tworzenia** folderu `reactivity/` oraz plików `signal-tree.ts`, `wakeup.ts` jako osobnych jednostek.
 - Wszystkie rzeczy reaktywne (oprócz czystego batchera) muszą mieszkać w `core/` lub `proxy/`.
 
-### 0.3 Mechaniczne egzekwowanie "zero duplication" dla jsondb (najważniejsze)
-- `jsondb/` w `store-solid` **może zawierać tylko** jeden nowy plik: `solid-pipeline-bridge.ts`.
-- Wszystkie pozostałe pliki (`core/`, `operators/`, `utils/` itd.) muszą być **verbatim copy** z `store4/store/jsondb/`.
+### 0.3 Mechaniczne egzekwowanie "zero duplication" dla jsnq (najważniejsze)
+- `jsnq/` w `store-solid` **może zawierać tylko** jeden nowy plik: `solid-pipeline-bridge.ts`.
+- Wszystkie pozostałe pliki (`core/`, `operators/`, `utils/` itd.) muszą być **verbatim copy** z `store4/store/jsnq/`.
 - Wymagane: przed rozpoczęciem Phase 0 musi istnieć skrypt (np. `scripts/sync-pure-from-angular-store.sh`) + wpis w package.json, który porównuje katalogi i **failuje** na jakąkolwiek różnicę (oprócz dozwolonego bridge).
-- Na obecnym dysku folder `store-solid/src/jsondb/operators/` już istnieje — **musi zostać usunięty** przed jakąkolwiek implementacją (zostawić tylko bridge).
+- Na obecnym dysku folder `store-solid/src/jsnq/operators/` już istnieje — **musi zostać usunięty** przed jakąkolwiek implementacją (zostawić tylko bridge).
 
 ### 0.4 Surowe, obcięte budżety LOC (hard caps)
 - `proxy/solid-proxy.ts`: **maksymalnie 320 LOC** (w tym komentarze). To jedyny plik, który może być "złożony".
@@ -74,7 +74,7 @@ Emitter musi być w stanie wyemitować **identyczne** eventy od samego początku
 
 1. `proxy/solid-proxy.ts` (≤320 LOC hard cap) — **zaczynamy tutaj**
 2. `core/SolidStore.ts`
-3. `jsondb/solid-pipeline-bridge.ts` (z bardzo precyzyjnym kontraktem root vs subtree + batching)
+3. `jsnq/solid-pipeline-bridge.ts` (z bardzo precyzyjnym kontraktem root vs subtree + batching)
 4. `array/solid-array.ts`
 
 ---
@@ -82,8 +82,8 @@ Emitter musi być w stanie wyemitować **identyczne** eventy od samego początku
 ## 4. Zaktualizowane fazy implementacji (z wymaganiami Critica)
 
 **Phase 0 (Foundation + Hard Contracts)**
-- Usunąć istniejący folder `jsondb/operators` w store-solid (jeśli istnieje).
-- Skopiować czyste artefakty (PathUtils, type-guards, errors, jsondb core/operators z nagłówkami "DO NOT EDIT — synced from store4/store").
+- Usunąć istniejący folder `jsnq/operators` w store-solid (jeśli istnieje).
+- Skopiować czyste artefakty (PathUtils, type-guards, errors, jsnq core/operators z nagłówkami "DO NOT EDIT — synced from store4/store").
 - Utworzyć skrypt sync + wpis w package.json.
 - Zdefiniować dokładne kontrakty (StoreMutator, ArrayMutator, bridge API) w tym dokumencie.
 - Zaimplementować `solid-proxy.ts` + minimalne drzewo sygnałów + **proxy identity + caching + prefetch side-effects**.
@@ -92,7 +92,7 @@ Emitter musi być w stanie wyemitować **identyczne** eventy od samego początku
 **Phase 1**
 - `SolidStore.ts` + `createSolidStore` + headless path.
 - Pełny dispatch metod (mutate, pipe, array entrypoint).
-- Bridge jsondb z dokładną obsługą root special case + begin/endAction equivalent (batching + devtools).
+- Bridge jsnq z dokładną obsługą root special case + begin/endAction equivalent (batching + devtools).
 - Proxy cache + GC cleanup.
 
 **Phase 2**
@@ -150,7 +150,7 @@ Musi zawierać **wszystko** z `store-instance.interface.ts` + CreateStore + Sign
 Dokument jest teraz znacznie twardszy. Wszystkie główne ryzyka wskazane przez Critica zostały zaadresowane jako wymagania blokujące.
 
 **2026-05-30 addendum (unifikacje wszystko — supervisor takeover):**
-Micro-walk helpers (getParentSegments / resolveParentAndKey / ensurePathIn) + full delegation in SolidStore + mechanical `verify:sync` enforcer (scripts/ + package.json) completed with zero regression per UNIFICATION-SAFE-PLAN + AUDIT. Proxy/bridge high-risk walks left for safety. See UNIFICATION-EXECUTION-REPORT.md. The critical "verbatim jsondb" rule is now mechanically enforceable.
+Micro-walk helpers (getParentSegments / resolveParentAndKey / ensurePathIn) + full delegation in SolidStore + mechanical `verify:sync` enforcer (scripts/ + package.json) completed with zero regression per UNIFICATION-SAFE-PLAN + AUDIT. Proxy/bridge high-risk walks left for safety. See UNIFICATION-EXECUTION-REPORT.md. The critical "verbatim jsnq" rule is now mechanically enforceable.
 
 **Następny krok po Twoim "OK":**  
 Uruchomienie pierwszej fali implementacyjnej (zaczynamy od `solid-proxy.ts` z bardzo ostrym briefingiem uwzględniającym wszystkie powyższe reguły).

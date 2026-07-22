@@ -1,4 +1,4 @@
-import type { JsonMutationResult } from '@synestiqx/jsondb/data-engine';
+import type { JsonMutationResult } from '@synestiqx/jsnq/data-engine';
 import type { SolidWakeMode } from '../proxy/solid-proxy';
 
 export type StorePrimitive = string | number | boolean | bigint | symbol | null | undefined;
@@ -19,15 +19,17 @@ export interface SolidProxyMetrics {
 export interface SolidStoreReactivity {
   wakeMutation(result: JsonMutationResult): void;
   wakeMutations(results: JsonMutationResult[]): void;
+  wakeArrayTail(arrayPath: string, index: number, branchReplaced: boolean): void;
   wakeArraySplice(arrayPath: string, startIndex: number): void;
   addBranchSub(path: string): void;
   removeBranchSub(path: string): void;
   wakeSignalPath(path: string, mode?: SolidWakeMode): void;
   /** Snapshot of proxy-graph sizes for devtools PROXY_METRICS emission. */
   getProxyMetrics?(): SolidProxyMetrics;
+  destroy(): void;
 }
 
-// opinia5: shared shapes for the $-namespace (subscriptions + reactive jsondb reads).
+// opinia5: shared shapes for the $-namespace (subscriptions + reactive jsnq reads).
 export type StoreSubscription = { unsubscribe(): void; dispose(): void };
 
 export type StoreSubscribeOptions<T> = {
@@ -67,12 +69,12 @@ export type StoreArray<T> = StoreLeaf<T[]> & {
   splice(start: number, deleteCount?: number, ...items: T[]): T[];
   sort(compareFn?: (a: T, b: T) => number): SolidStoreProxy<T[]>;
   reverse(): SolidStoreProxy<T[]>;
-  find(predicate: (item: T, index: number, array: T[]) => boolean): StoreLeaf<T | undefined>;
-  findIndex(predicate: (item: T, index: number, array: T[]) => boolean): StoreLeaf<number>;
+  find(predicate: (item: T, index: number, array: T[]) => boolean): T | undefined;
+  findIndex(predicate: (item: T, index: number, array: T[]) => boolean): number;
   filter(predicate: (item: T, index: number, array: T[]) => boolean): T[];
   map<R>(callback: (item: T, index: number, array: T[]) => R): R[];
-  some(predicate: (item: T, index: number, array: T[]) => boolean): StoreLeaf<boolean>;
-  every(predicate: (item: T, index: number, array: T[]) => boolean): StoreLeaf<boolean>;
+  some(predicate: (item: T, index: number, array: T[]) => boolean): boolean;
+  every(predicate: (item: T, index: number, array: T[]) => boolean): boolean;
   includes(value: T): boolean;
   indexOf(value: T): number;
   mutate(...ops: unknown[]): unknown;

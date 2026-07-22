@@ -1,10 +1,10 @@
 import { createMemo, createRoot } from 'solid-js';
 import { createSolidStore, onSolidDevAction } from '../src';
-import '../src/jsondb';
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
-import insert from '@synestiqx/jsondb/operators/insert';
-import moveToMatches from '@synestiqx/jsondb/operators/moveToMatches';
+import '../src/jsnq';
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
+import insert from '@synestiqx/jsnq/operators/insert';
+import moveToMatches from '@synestiqx/jsnq/operators/moveToMatches';
 
 type WakeMode = 'grained' | 'container';
 
@@ -110,7 +110,7 @@ function audit(store: any, api: ReturnType<typeof createSolidStore>) {
     firstTitle: store.storeComponent.user.posts[0].title(),
     postsCount: posts.length,
     taggedCount: posts.filter((post) => post.content.includes('[tagged]')).length,
-    foundJsonDb: !!store.storeComponent.user.posts.find((post: Post) => post.title === 'JsonDB Post'),
+    foundJsnq: !!store.storeComponent.user.posts.find((post: Post) => post.title === 'JSNQ Post'),
     filteredTagged: (store.storeComponent.user.posts.filter((post: Post) => post.content.includes('[tagged]')) as Post[]).length,
     hasProxyPost: store.storeComponent.user.posts.some((post: Post) => post.title === 'Proxy Post'),
     lengthViaProxy: store.storeComponent.user.posts.length,
@@ -163,7 +163,7 @@ async function runScenario(batch: boolean, wakeMode: WakeMode) {
       api.setValue('storeComponent.user.profile.settings.theme', 'contrast');
       store.storeComponent.user.posts.push({ title: 'Proxy Post', content: 'from proxy push' });
       store.storeComponent.user.posts[0].title = 'Proxy Updated Title';
-      api.mutate('storeComponent.user.posts', insert({ title: 'JsonDB Post', content: 'from jsondb insert' }, 'inside'));
+      api.mutate('storeComponent.user.posts', insert({ title: 'JSNQ Post', content: 'from jsnq insert' }, 'inside'));
       api.mutate('storeComponent.user.posts', where('title', 'includes', 'Post'), update('content', (current: string) => `${current} [tagged]`));
       api.mutate(
         'storeComponent.table',
@@ -180,13 +180,13 @@ async function runScenario(batch: boolean, wakeMode: WakeMode) {
     assert(result.theme === 'contrast', `${batch}/${wakeMode}: native nested theme`);
     assert(result.firstTitle === 'Proxy Updated Title', `${batch}/${wakeMode}: nested array title`);
     assert(result.postsCount === 4, `${batch}/${wakeMode}: posts count`);
-    assert(result.taggedCount >= 3, `${batch}/${wakeMode}: jsondb tag posts`);
-    assert(result.foundJsonDb, `${batch}/${wakeMode}: query find JsonDB post`);
+    assert(result.taggedCount >= 3, `${batch}/${wakeMode}: jsnq tag posts`);
+    assert(result.foundJsnq, `${batch}/${wakeMode}: query find JSNQ post`);
     assert(result.filteredTagged >= 3, `${batch}/${wakeMode}: query filter tagged posts`);
     assert(result.hasProxyPost, `${batch}/${wakeMode}: query some proxy post`);
     assert(result.lengthViaProxy === 4, `${batch}/${wakeMode}: array length proxy`);
-    assert(result.processingIds.includes('shipment-1002'), `${batch}/${wakeMode}: jsondb move into processing`);
-    assert(!result.incomingIds.includes('shipment-1002'), `${batch}/${wakeMode}: jsondb move removes from incoming`);
+    assert(result.processingIds.includes('shipment-1002'), `${batch}/${wakeMode}: jsnq move into processing`);
+    assert(!result.incomingIds.includes('shipment-1002'), `${batch}/${wakeMode}: jsnq move removes from incoming`);
     assert(firstTitleMemo() === 'Proxy Updated Title', `${batch}/${wakeMode}: memo sees final title`);
 
     return {

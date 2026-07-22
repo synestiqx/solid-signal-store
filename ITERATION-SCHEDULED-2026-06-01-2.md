@@ -8,7 +8,7 @@
 - benchmark: all 10 cases PASS (large-flat-delete-many ~7ms; RingBuffer microbench still shows ~12-15x win in logger path)
 - verify.ts: full PASS (granularity grained=1 vs container=3 + dev shapes + all contracts)
 
-Dispatch audit (quick grep on non-verbatim layers): clean. No raw switches/ifs left in mutate/pipe/bridge/array dispatch paths (all via named helpers/tables like getJsondbBridge, applyArrayMutation, isArray*Method, etc.). Previous maximization work holds. (Only verbatim synced/ untouched per PLAN.)
+Dispatch audit (quick grep on non-verbatim layers): clean. No raw switches/ifs left in mutate/pipe/bridge/array dispatch paths (all via named helpers/tables like getJsnqBridge, applyArrayMutation, isArray*Method, etc.). Previous maximization work holds. (Only verbatim synced/ untouched per PLAN.)
 
 ## Local Playwright Verification (key pillar — unblocked this iteration)
 - `bun run test:browser` executed but hit early Vite transform blocker on demo load: "Failed to resolve import "../src/utils/ring-buffer" from "src/logger.ts"" (relative path from inside demo doesn't resolve under test webServer).

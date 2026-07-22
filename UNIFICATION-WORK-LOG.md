@@ -6,10 +6,10 @@
 
 ## BASELINE (pre any edit, TASK 0)
 - Timestamp: just now
-- Read: UNIFICATION-AUDIT.md (full), UNIFICATION-SAFE-PLAN.md (full), relevant PLAN.md §0.3/0.4/4, jsondb-optimization-status.md, ARCHITECTURE.md, all 5 whitelist sources (path.ts already contained the 3 helpers from prior micro-walk extension; 0 call sites yet).
+- Read: UNIFICATION-AUDIT.md (full), UNIFICATION-SAFE-PLAN.md (full), relevant PLAN.md §0.3/0.4/4, jsnq-optimization-status.md, ARCHITECTURE.md, all 5 whitelist sources (path.ts already contained the 3 helpers from prior micro-walk extension; 0 call sites yet).
 - Baseline gates:
-  - `bun test test/jsondb-core-patterns.test.ts` → 6/6 PASS (flat sugar, deep, insert, null, etc.)
-  - `bun run test/jsondb-benchmark.ts` → all 9 cases PASS (large-flat-delete 66ms, root-replace 0ms, deep 15-level 0.08ms, etc.) — exact reference numbers captured.
+  - `bun test test/jsnq-core-patterns.test.ts` → 6/6 PASS (flat sugar, deep, insert, null, etc.)
+  - `bun run test/jsnq-benchmark.ts` → all 9 cases PASS (large-flat-delete 66ms, root-replace 0ms, deep 15-level 0.08ms, etc.) — exact reference numbers captured.
 - Observation: helpers (getParentSegments, resolveParentAndKey, ensurePathIn) already exist in internal/path.ts with correct semantics + comments. Only delegations (TASK 2-4) + sync script (TASK 5) remain.
 - Log: "BASELINE GREEN — main tree pristine. Beginning safe micro-unification per plan."
 
@@ -45,7 +45,7 @@
 
 ## TASK 5 SUCCESS — sync enforcer (the #1 missing PLAN §0.3 piece)
 - Timestamp: 2026-05-30
-- Created: scripts/sync-jsondb-verbatim.ts (defensive,  ~50 LOC, ignores local-only header, compares 26 runtime files)
+- Created: scripts/sync-jsnq-verbatim.ts (defensive,  ~50 LOC, ignores local-only header, compares 26 runtime files)
 - Wired: package.json "verify:sync"
 - Gates: `bun run verify:sync` → clean ✅ (26 files byte-identical)
   + core 6/6 + benchmark full PASS (large-delete 36ms green)

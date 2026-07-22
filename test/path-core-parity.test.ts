@@ -9,7 +9,7 @@ import {
   setByPath,
   splitPath,
 } from '../src/internal/path';
-import { PathUtils as JsonPathUtils } from '../src/jsondb/utils/path-utils';
+import { PathUtils as JsonPathUtils } from '../src/jsnq/utils/path-utils';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);

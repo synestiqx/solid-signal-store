@@ -33,10 +33,10 @@
 ## Local Gates (post-edit, all green)
 - `bun run verify:sync` → ✅ verbatim 26 files byte-identical
 - `bun run verify` → ✅ full contracts + **granularity: grained=1, container=3** (exact leaf only by default — max Solid-native)
-- `bun test/jsondb-core-patterns.test.ts` → 6/6 ✅
-- `bun test/jsondb-benchmark.ts` → 10/10 PASS (large-delete ~4ms healthy; Proxy Heavy 100k ops clean; RingBuffer logger micro still 8.96x win — correct place)
+- `bun test/jsnq-core-patterns.test.ts` → 6/6 ✅
+- `bun test/jsnq-benchmark.ts` → 10/10 PASS (large-delete ~4ms healthy; Proxy Heavy 100k ops clean; RingBuffer logger micro still 8.96x win — correct place)
 - `bun run test:browser --grep "isolated pure reactivity"` → 1 passed (7.0s)
-  - Dedicated artifact regenerated: `test-results/jsondb-pure-reactivity-isolated.png` (1280x1246, recent)
+  - Dedicated artifact regenerated: `test-results/jsnq-pure-reactivity-isolated.png` (1280x1246, recent)
 
 ## Evidence of Max Wydajność State
 - Proxy remains under hard 320 LOC comment.

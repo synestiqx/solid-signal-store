@@ -9,32 +9,30 @@
  * that the Angular host already had and Solid was missing.
  */
 
-import type { StoreDevToolsAction } from './SolidStore';
+import type {
+  DevStream,
+  DevToolsEvent,
+  ProxyMetrics,
+  SolidDevtoolsAdapter,
+  StoreDevToolsAction,
+} from './devtools-contract';
 
-export type DevToolsEvent = StoreDevToolsAction & { storeName?: string };
-
-export interface ProxyMetrics {
-  signals: number;
-  proxies: number;
-  branchSubs: number;
-}
-
-export interface DevStream<T = DevToolsEvent> {
-  subscribe(cb: (value: T) => void): { unsubscribe(): void };
-  get(): T | null;
-}
+export type { DevStream, DevToolsEvent, ProxyMetrics, SolidDevtoolsAdapter } from './devtools-contract';
 
 class ListenerStream<T = DevToolsEvent> implements DevStream<T> {
   private listeners = new Set<(value: T) => void>();
   private lastValue: T | null = null;
+  private hasValue = false;
 
   subscribe(cb: (value: T) => void): { unsubscribe(): void } {
     this.listeners.add(cb);
+    if (this.hasValue) cb(this.lastValue as T);
     return { unsubscribe: () => this.listeners.delete(cb) };
   }
 
   emit(value: T): void {
     this.lastValue = value;
+    this.hasValue = true;
     for (const fn of this.listeners) {
       try { fn(value); } catch { /* isolated listener */ }
     }
@@ -45,10 +43,11 @@ class ListenerStream<T = DevToolsEvent> implements DevStream<T> {
   clear(): void {
     this.listeners.clear();
     this.lastValue = null;
+    this.hasValue = false;
   }
 }
 
-export class SolidDevService {
+export class SolidDevService implements SolidDevtoolsAdapter {
   readonly action$: DevStream = new ListenerStream();
   readonly readAction$: DevStream = new ListenerStream();
 
@@ -82,4 +81,8 @@ export class SolidDevService {
     (this.action$ as ListenerStream).clear();
     (this.readAction$ as ListenerStream).clear();
   }
+}
+
+export function createSolidDevtools(): SolidDevService {
+  return new SolidDevService();
 }

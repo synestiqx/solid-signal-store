@@ -1,5 +1,5 @@
 {
-  "name": "store-solid-browser-demo",
+  "name": "solidstore-browser-demo",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "gsap": "^3.15.0",
-    "solid-js": "^1.8.0"
+    "solid-js": "1.9.14"
   },
   "devDependencies": {
     "vite": "^5.2.0",

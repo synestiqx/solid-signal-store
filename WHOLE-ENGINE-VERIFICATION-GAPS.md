@@ -1,17 +1,17 @@
 # WHOLE-ENGINE-VERIFICATION-GAPS.md
 
-**Scope:** Non-jsondb layers only (`src/proxy/solid-proxy.ts`, `src/core/SolidStore.ts`, `src/array/solid-array.ts`, `createSolidProxy` / `SolidStore` / array entrypoints, `computedOf`/`select`, devtools bus, mutator contracts).  
+**Scope:** Non-jsnq layers only (`src/proxy/solid-proxy.ts`, `src/core/SolidStore.ts`, `src/array/solid-array.ts`, `createSolidProxy` / `SolidStore` / array entrypoints, `computedOf`/`select`, devtools bus, mutator contracts).
 **Focus:** Explicit verification (tests, asserts, hooks, spies) of subtle contracts listed in PLAN.md §0.5 (Appendix A — Known Subtle Contracts) and Appendix B references (proxy identity, prefetch side-effects as observable, root key-diff, FinalizationRegistry/GC cleanup, devtools event shapes, plus related: computedOf/select tracking, array fluent direct usage, callable proxy $val/$signal surface).  
 **Date of audit:** 2026-05-30 (post pure-reactivity additions in browser-demo + store-reactivity.spec.ts).  
 **Status:** Read-only audit. All analysis from direct file reads + searches (no edits).
 
-## Current Coverage Summary (Non-jsondb)
+## Current Coverage Summary (Non-jsnq)
 - **Implementation present** (solid-proxy.ts: proxy cache for identity + FinalizationRegistry + prefetch calls in make/intermediates + $val/$signal on callable fns + array dispatch traps; SolidStore.ts: #commitRoot key-diff, emitDevAction (gated), computedOf as 3-line createMemo, array() + arrayOp, cleanupPath; solid-array.ts: ArrayChain + executeArrayOperation; rx-interop minimal).
 - **Smoke coverage only** (recent pure reactivity additions):
   - `examples/browser-demo/src/index.tsx`: `runPureReactivityChecks()` exercises proxy identity (deep+shallow), $val/$signal presence, computedOf, .array() fluent push (pure), prefetch call flag. Exposes `__TEST_PURE_*` hooks.
-  - `test/browser/store-reactivity.spec.ts`: asserts the 5 pure flags + timing + "PURE REACTIVITY" log (plus broad jsondb). Captures some DEV events.
+  - `test/browser/store-reactivity.spec.ts`: asserts the 5 pure flags + timing + "PURE REACTIVITY" log (plus broad jsnq). Captures some DEV events.
   - `verify.ts`: manual node script; asserts basic proxy identity + ArrayChain; no signals, no GC, no dev, no computedOf, no root key-diff isolation, no prefetch spies.
-- **Gaps:** No deterministic headless unit coverage. No spies. No GC trigger. No exact dev shapes/payloads. Root key-diff only indirect via bridge. Prefetch/computed/array surfaces only flag-level in browser demo. No test file dedicated to core non-jsondb contracts (all unit tests under `test/` are jsondb-only; browser is the sole automated reactivity gate).
+- **Gaps:** No deterministic headless unit coverage. No spies. No GC trigger. No exact dev shapes/payloads. Root key-diff only indirect via bridge. Prefetch/computed/array surfaces only flag-level in browser demo. No test file dedicated to core non-jsnq contracts (all unit tests under `test/` are jsnq-only; browser is the sole automated reactivity gate).
 
 PLAN.md requires these as **public/observable contracts** (not optimizations) from Phase 0. UNIFICATION docs + WHOLE-ENGINE-PROGRESS-THIS-ITERATION.md explicitly call out remaining gaps in GC, devtools shapes, root key-diff isolation, deeper computed/select scenarios.
 
@@ -48,9 +48,9 @@ expect(devEvents.some(e => e.type==='SET_VALUE' && e.payload?.path==='x')).toBe(
 ```
 Spec then: `expect(await page.evaluate(()=>__TEST_DEV_SHAPES)).toMatchObject([...])`.
 
-### 3. Root key-diff + per-key delete (pure non-jsondb path)
+### 3. Root key-diff + per-key delete (pure non-jsnq path)
 **Contract:** `#commitRoot` (SolidStore:102-115) on root write (`!p`): union keys of curr/next, `delete (this.store as any)[k]` for removed, assign for present (batched). Per-key observable deletes via proxy traps. Critical for root mutate/replace parity (PLAN §0.5 + code comment).
-**Current state:** Implemented + delegated to SST. Exercised indirectly in jsondb root-replace (browser demo + benchmark + spec data/timing asserts). No pure non-bridge isolation (direct proxy root assign, setValue on '', or internal #commit('')).
+**Current state:** Implemented + delegated to SST. Exercised indirectly in jsnq root-replace (browser demo + benchmark + spec data/timing asserts). No pure non-bridge isolation (direct proxy root assign, setValue on '', or internal #commit('')).
 **Suggested minimal addition:**
 - File: `verify.ts` (headless) + optional browser-demo pure hook.
 - 4-7 line example:
@@ -93,13 +93,13 @@ const chain = (store as any).flat.array(); /* fluent */
 (window as any).__TEST_FULL_TRACKING = {memos, selVal:sel.value, ...};
 ```
 
-### 6. (Supporting) Absence of automated headless unit tests for non-jsondb contracts
+### 6. (Supporting) Absence of automated headless unit tests for non-jsnq contracts
 **Contract/Need:** All subtle contracts should have deterministic asserts runnable in CI without browser (verify.ts is manual; browser demo is visual + heavy).
-**Current state:** Only jsondb unit tests + 1 browser spec (demo-dependent). verify.ts + recent demo additions are the sum total.
+**Current state:** Only jsnq unit tests + 1 browser spec (demo-dependent). verify.ts + recent demo additions are the sum total.
 **Suggested minimal addition:** (descriptive) New `test/core-contracts.test.ts` (or expand verify.ts to export results + assert script) using createRoot + solid-js testing primitives + mutator spies. Wire to package.json "test:core": "bunx tsx test/core-contracts.test.ts". Keeps browser as integration layer.
 
 ## One Overall Recommendation for Next Iteration
-Prioritize **Gap #1 (GC/Finalization) + Gap #2 (exact devtools shapes)** first (both repeatedly flagged in PLAN, audits, progress docs as unverified despite implementation). Deliver a single expanded headless verification (extend `verify.ts` with spies + optional --expose-gc + 20-30 LOC of contract asserts for identity/prefetch/root-diff/GC/dev-shapes/computed/$val) runnable via `bun run verify` and gated in CI. Treat the browser demo + Playwright spec as the *visual + full-stack integration* proof (keep/enhance the pure panel), not the sole/primary automated evidence for the non-jsondb subtle contracts. This makes whole-engine verification robust, fast, and independent of DOM/Playwright while directly satisfying Appendix A/B.
+Prioritize **Gap #1 (GC/Finalization) + Gap #2 (exact devtools shapes)** first (both repeatedly flagged in PLAN, audits, progress docs as unverified despite implementation). Deliver a single expanded headless verification (extend `verify.ts` with spies + optional --expose-gc + 20-30 LOC of contract asserts for identity/prefetch/root-diff/GC/dev-shapes/computed/$val) runnable via `bun run verify` and gated in CI. Treat the browser demo + Playwright spec as the *visual + full-stack integration* proof (keep/enhance the pure panel), not the sole/primary automated evidence for the non-jsnq subtle contracts. This makes whole-engine verification robust, fast, and independent of DOM/Playwright while directly satisfying Appendix A/B.
 
 All file paths above are absolute within `/home/sshuser/angularBench/search_engine/store4/store-solid/`. No source changes performed.
 
@@ -113,4 +113,3 @@ All file paths above are absolute within `/home/sshuser/angularBench/search_engi
   - GC (best-effort, requires --expose-gc)
 - This directly addresses auditor Gaps #1, #2, #4, #5.
 - Still missing strong isolation for root key-diff and real FinalizationRegistry GC (hard without node flags).
-

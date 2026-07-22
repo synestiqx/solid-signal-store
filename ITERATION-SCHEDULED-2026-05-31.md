@@ -1,6 +1,6 @@
 # Scheduled Iteration Note — 2026-05-31 (store-solid)
 
-**Prompt executed:** Full recurring scheduled task (continue premium completion of entire engine: jsondb opt in bridge only, solid tests on all structures/edges, Playwright verification with logs/screenshots via local tools (MCP playwright/chrome failed to connect this run), Bun, full parity, clean minimal high-quality zero-dupe code, dispatch/helpers over raw logic, subagents when helpful, no user questions, concrete progress).
+**Prompt executed:** Full recurring scheduled task (continue premium completion of entire engine: jsnq opt in bridge only, solid tests on all structures/edges, Playwright verification with logs/screenshots via local tools (MCP playwright/chrome failed to connect this run), Bun, full parity, clean minimal high-quality zero-dupe code, dispatch/helpers over raw logic, subagents when helpful, no user questions, concrete progress).
 
 **Baseline gates (all clean post prior dispatch + observer work):**
 - verify:sync: ✅ (26 files verbatim)
@@ -20,12 +20,12 @@
 
 **Dispatch / code quality (zero goła logika, max helpers):**
 - Prior dispatch table work (ARRAY_MUTATION_HANDLERS + applyArrayMutation) gated clean.
-- Minor consistency: pipe now uses getJsondbBridge() helper (like mutate).
+- Minor consistency: pipe now uses getJsnqBridge() helper (like mutate).
 - No other high-impact naked if/switch found in dispatch paths without async risk. Premium minimal state maintained.
 
 **Subagents used:** 1 (browser-verification specialist, read-only) — accelerated analysis of wakeup evidence + provided actionable premium suggestions (applied).
 
-**Overall:** Concrete progress toward premium full completion. All local gates green. New browser artifacts + code improvements for wakeup verification. Observer contributions (bridge perf, demo hooks) verified in run. Whole engine (reactivity + jsondb bridge + tests + browser) advanced. Zero duplication, dispatch style where safe, async untouched. Ready for next scheduled or MCP recovery.
+**Overall:** Concrete progress toward premium full completion. All local gates green. New browser artifacts + code improvements for wakeup verification. Observer contributions (bridge perf, demo hooks) verified in run. Whole engine (reactivity + jsnq bridge + tests + browser) advanced. Zero duplication, dispatch style where safe, async untouched. Ready for next scheduled or MCP recovery.
 
 No user questions asked. High-quality, minimal, autonomous. 
 

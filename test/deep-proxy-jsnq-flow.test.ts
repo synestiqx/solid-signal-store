@@ -1,9 +1,9 @@
 import { createSolidStore, onSolidDevAction } from '../src';
-import '../src/jsondb';
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
-import insert from '@synestiqx/jsondb/operators/insert';
-import moveToMatches from '@synestiqx/jsondb/operators/moveToMatches';
+import '../src/jsnq';
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
+import insert from '@synestiqx/jsnq/operators/insert';
+import moveToMatches from '@synestiqx/jsnq/operators/moveToMatches';
 
 type FieldNode = {
   id: string;
@@ -67,13 +67,16 @@ async function flush(): Promise<void> {
   await Promise.resolve();
 }
 
-const api = createSolidStore(createState(), 'solid_deep_proxy_jsondb_flow');
+const api = createSolidStore(createState(), 'solid_deep_proxy_jsnq_flow');
 const store = api.store as any;
+store.workspace.runtime = {};
+store.workspace.runtime.dynamic = 'created-through-proxy';
+assert(store.workspace.runtime.dynamic() === 'created-through-proxy', 'deep dynamic key assignment is callable');
 const events: any[] = [];
 const unsubscribe = onSolidDevAction((event) => {
-  if (event.storeName === 'solid_deep_proxy_jsondb_flow') events.push(event);
+  if (event.storeName === 'solid_deep_proxy_jsnq_flow') events.push(event);
 });
-api.enableDevTools('solid_deep_proxy_jsondb_flow');
+api.enableDevTools('solid_deep_proxy_jsnq_flow');
 api.wakeUp('grained');
 
 const title = store.workspace.pages[0].sections[0].blocks[0];
@@ -93,7 +96,7 @@ store.workspace.pages[0].sections[1].blocks.mutate(
   update('settings.style.color', () => 'green')
 );
 store.workspace.pages[0].sections[1].blocks.mutate(
-  insert(field('jsondb-inserted'), 'inside')
+  insert(field('jsnq-inserted'), 'inside')
 );
 store.workspace.pages[0].sections[1].blocks.mutate(
   where('id', '===', 'article-card'),
@@ -104,22 +107,26 @@ await flush();
 
 const contentBlocks = store.workspace.pages[0].sections[1].blocks() as FieldNode[];
 const footer = contentBlocks.find((item) => item.id === 'footer-cta');
-const inserted = contentBlocks.find((item) => item.id === 'jsondb-inserted');
+const inserted = contentBlocks.find((item) => item.id === 'jsnq-inserted');
 const articleList = contentBlocks.find((item) => item.id === 'article-list');
-assert(footer?.settings.style.color === 'green', 'jsondb update on deep style path');
-assert(!!inserted, 'jsondb insert into nested blocks');
-assert(!articleList?.fields.some((item) => item.id === 'article-card'), 'jsondb move removes nested source from child fields');
-assert(contentBlocks.some((item) => item.id === 'article-card'), 'jsondb move adds source beside target');
+assert(footer?.settings.style.color === 'green', 'jsnq update on deep style path');
+assert(!!inserted, 'jsnq insert into nested blocks');
+assert(!articleList?.fields.some((item) => item.id === 'article-card'), 'jsnq move removes nested source from child fields');
+assert(contentBlocks.some((item) => item.id === 'article-card'), 'jsnq move adds source beside target');
 assert(store.workspace.audit.events.length === 1, 'proxy push audit event recorded');
 
 await flush();
 const invalidPath = events
   .map((event) => String(event.payload?.path ?? ''))
   .find((path) => /\.(push|mutate|pipe|subscribe)(\.|$)/.test(path));
-assert(!invalidPath, `proxy/jsondb method names must not leak into devtools paths, got ${invalidPath}`);
+assert(!invalidPath, `proxy/jsnq method names must not leak into devtools paths, got ${invalidPath}`);
 assert(events.some((event) => String(event.payload?.path ?? '') === 'workspace.pages.0.sections.0.blocks.0.data'), 'deep assignment path logged');
-assert(events.some((event) => String(event.payload?.path ?? '') === 'workspace.pages.0.sections.1.blocks'), 'jsondb nested blocks path logged');
+assert(events.some((event) => String(event.payload?.path ?? '') === 'workspace.pages.0.sections.1.blocks'), 'jsnq nested blocks path logged');
+
+const serializedTitle = JSON.parse(JSON.stringify(title));
+assert(serializedTitle.data === 'Hero Title Updated', 'toJSON is callable and JSON.stringify returns current proxy value');
+assert(title.valueOf().data === 'Hero Title Updated', 'valueOf is callable and returns current proxy value');
 
 unsubscribe();
 api.destroy();
-console.log('All solid deep proxy jsondb flow tests passed.');
+console.log('All solid deep proxy jsnq flow tests passed.');

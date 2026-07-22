@@ -6,8 +6,8 @@
 ## Concrete Progress Delivered
 
 ### 1. Full Verification Gates (re-confirmed clean baseline)
-- `bun test/jsondb-core-patterns.test.ts` → 6/6 ✅
-- `bun test/jsondb-benchmark.ts` → all 9 cases PASS (including large-flat-delete-many, root-replace, deep nesting)
+- `bun test/jsnq-core-patterns.test.ts` → 6/6 ✅
+- `bun test/jsnq-benchmark.ts` → all 9 cases PASS (including large-flat-delete-many, root-replace, deep nesting)
 - `bun run verify` → all extended contracts + strengthened granularity test ✅
   - `wakeUp` measurement still works: grained=1 (only leaf), container=3 (leaf + parents)
 - `verify:sync` (from earlier in iteration) → verbatim identical ✅

@@ -1,8 +1,8 @@
 import { createRoot } from 'solid-js';
 import { createSolidStore } from '../src';
-import '../src/jsondb'; // registers the global jsondb bridge (required for $query/$liveQuery/$mutate)
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
+import '../src/jsnq'; // registers the global jsnq bridge (required for $query/$liveQuery/$mutate)
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
 
 function assert(condition: unknown, message: string): void {
   if (!condition) throw new Error(`Assertion failed: ${message}`);
@@ -39,6 +39,17 @@ function testSnapshotQuery(): void {
   // Parity with a manual filter (the oracle)
   const manual = seed().users.filter((u) => u.active).map((u) => u.id).join(',');
   assert(active.map((u) => u.id).join(',') === manual, '$query matches manual filter oracle');
+
+  const domainApi = createSolidStore({ rows: [{ id: 1, data: 'payload', name: 'row' }] }, 'lq_domain_data');
+  const domainStore = domainApi.store as any;
+  const domainRow = domainStore.rows.$queryOne(where('id', '===', 1));
+  assert(domainRow?.id === 1 && domainRow.data === 'payload', '$queryOne preserves domain objects with a data field');
+
+  const before = JSON.stringify(domainApi.readStore('rows'));
+  const projected = domainStore.rows.$query(where('id', '===', 1), update('name', 'query-only'));
+  assert(projected[0].name === 'query-only', '$query may transform its isolated result');
+  assert(JSON.stringify(domainApi.readStore('rows')) === before, '$query actions never mutate live store data');
+  domainApi.destroy();
   api.destroy();
 }
 
@@ -115,7 +126,7 @@ function testDollarAliases(): void {
   const afterMutate = api.readStore('users') as User[];
   assert(afterMutate.find((u) => u.id === 1)!.active === false, '$mutate alias performs the mutation');
 
-  // $query is the dedicated jsondb read (NOT the array-parity query)
+  // $query is the dedicated jsnq read (NOT the array-parity query)
   const admins = store.users.$query(where('active', '===', true)) as User[];
   assert(admins.length === 1 && admins[0].id === 3, '$query alias works alongside $mutate');
 

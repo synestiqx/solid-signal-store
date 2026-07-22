@@ -1,9 +1,9 @@
-// HARD LIMIT: 320 LOC. Follows PLAN.md v2 + Critic requirements. Proxy identity, prefetch side-effects, full callable getters for auto-tracking.
+// Callable proxy, path-indexed reactivity, and store dispatch for Solid.
 
 import { createSignal, batch, type Accessor, type Setter } from 'solid-js';
 import { enumerateAncestors, getParentPath, isValidPath, normalizePath } from '../internal/path'; // delegates to SST (internal/path.ts) — all parent walks now reuse shared path core (max unification, zero naked path building)
 import { ARRAY_METHODS } from '../array/solid-array';
-import { createMutationResult, type JsonMutationResult } from '@synestiqx/jsondb/data-engine';
+import { createMutationResult, type JsonMutationResult } from '@synestiqx/jsnq/data-engine';
 import { createProjectionObservable, type ProjectionObservableOptions } from '../core/rx-interop';
 import type { SolidStoreReactivity } from '../core/proxy-types';
 
@@ -94,46 +94,6 @@ function signalEquals(prev: unknown, next: unknown): boolean {
   return !prevIsObject && !nextIsObject && Object.is(prev, next);
 }
 
-class SignalPathIndex {
-  private readonly paths = new Set<string>();
-
-  add(path: string): void {
-    this.paths.add(path);
-  }
-
-  delete(path: string): void {
-    this.paths.delete(path);
-  }
-
-  descendantsOf(pathPrefix: string): string[] {
-    const prefix = pathPrefix ? `${pathPrefix}.` : '';
-    if (!prefix) return [];
-    const out: string[] = [];
-    for (const path of this.paths) {
-      if (path.startsWith(prefix)) out.push(path);
-    }
-    return out;
-  }
-
-  descendantsOfAny(pathPrefixes: readonly string[]): string[] {
-    const prefixes = pathPrefixes
-      .filter((path) => path.length > 0)
-      .map((path) => `${path}.`);
-    if (prefixes.length === 0) return [];
-
-    const out: string[] = [];
-    for (const path of this.paths) {
-      for (const prefix of prefixes) {
-        if (path.startsWith(prefix)) {
-          out.push(path);
-          break;
-        }
-      }
-    }
-    return out;
-  }
-}
-
 /**
  * SignalPathTrie — opinia3 #1 perf: branch wake in O(observed descendants of the
  * branch) instead of O(all observed signals) Set scan (SignalPathIndex above).
@@ -143,9 +103,7 @@ class SignalPathIndex {
  * straight to the branch node and collects only present descendants — matching the
  * previous `path.startsWith(prefix + '.')` semantics (the prefix itself excluded).
  *
- * Drop-in replacement: identical public surface (add / delete / descendantsOf /
- * descendantsOfAny). To revert, swap `new SignalPathTrie()` back to
- * `new SignalPathIndex()` in SolidProxyManager below — the old class is kept intact.
+ * The index is internal; callers only see precise wake behavior.
  */
 class SignalPathTrieNode {
   children: Map<string, SignalPathTrieNode> | null = null;
@@ -172,26 +130,6 @@ class SignalPathTrie {
       }
     }
     node.present = true;
-  }
-
-  delete(path: string): void {
-    if (!path) return;
-    const segs = path.split('.');
-    const chain: SignalPathTrieNode[] = [this.root];
-    let node = this.root;
-    for (const seg of segs) {
-      const child = node.children?.get(seg);
-      if (!child) return; // path was never indexed
-      chain.push(child);
-      node = child;
-    }
-    node.present = false;
-    // Prune now-empty leaf nodes bottom-up to keep the trie compact.
-    for (let i = chain.length - 1; i > 0; i--) {
-      const child = chain[i]!;
-      if (child.present || (child.children && child.children.size > 0)) break;
-      chain[i - 1]!.children?.delete(segs[i - 1]!);
-    }
   }
 
   descendantsOf(pathPrefix: string): string[] {
@@ -270,17 +208,18 @@ class SignalPathTrie {
 
 class SolidProxyManager {
   private signals = new Map<string, [Accessor<unknown>, Setter<unknown>]>();
-  // opinia3 #1: trie-backed index (O(branch descendants) wake). Revert: `new SignalPathIndex()`.
+  // Trie-backed index keeps branch wake proportional to observed descendants.
   private signalIndex = new SignalPathTrie();
   // opinia5: per-query branch subscriptions ($liveQuery / $subscribe). A path here means
   // "wake this branch signal whenever any descendant changes" — local branch tracking that
   // does NOT require flipping the whole store into container/wakeParents mode.
   private branchSubs = new Map<string, number>();
-  private proxies = new Map<string, P>();
+  private proxies = new Map<string, WeakRef<object>>();
   private arrayMethodHandlers = new Map<string, Function>();
   private ancestorPathCache = new Map<string, string[]>();
   private finalization?: FinalizationRegistry<string>;
   private static readonly MAX_ANCESTOR_CACHE_SIZE = 1000;
+  private static readonly MAX_CHILD_CACHE_SIZE = 256;
 
   constructor(private mutator: StoreMutator, private opts: SolidProxyOptions = {}) {
     // Respect initial option for low-level usage
@@ -290,11 +229,10 @@ class SolidProxyManager {
 
     if (typeof FinalizationRegistry !== 'undefined') {
       this.finalization = new FinalizationRegistry((path: string) => {
-        this.mutator.cleanupPath(path);
-        this.signals.delete(path);
-        this.signalIndex.delete(path);
-        this.proxies.delete(path);
-        this.deleteArrayMethodHandlers(path);
+        if (!this.proxies.get(path)?.deref()) {
+          this.proxies.delete(path);
+          this.deleteArrayMethodHandlers(path);
+        }
       });
     }
   }
@@ -414,6 +352,20 @@ class SolidProxyManager {
     if (this.branchSubs.size > 0) this.wakeBranchSubscribers([arrayPath]);
   }
 
+  /** Allocation-free wake path for O(1) push/pop tail mutations. */
+  wakeArrayTail(arrayPath: string, index: number, branchReplaced: boolean): void {
+    const indexPath = `${arrayPath}.${index}`;
+    if (branchReplaced) this.syncDescendants(indexPath);
+    this.wakeExact(arrayPath);
+    this.wakeExact(indexPath);
+    if (this.shouldWakeParents) {
+      for (const path of this.getParentWakeTargets(indexPath)) {
+        if (path !== arrayPath) this.updateSignal(path);
+      }
+    }
+    if (this.branchSubs.size > 0) this.wakeBranchSubscribers([arrayPath, indexPath]);
+  }
+
 
   private isBranchMutation(value: unknown): boolean {
     return value !== null && typeof value === 'object';
@@ -510,12 +462,22 @@ class SolidProxyManager {
     return { signals: this.signals.size, proxies: this.proxies.size, branchSubs: this.branchSubs.size };
   }
 
+  destroy(): void {
+    this.signals.clear();
+    this.signalIndex = new SignalPathTrie();
+    this.branchSubs.clear();
+    this.proxies.clear();
+    this.arrayMethodHandlers.clear();
+    this.ancestorPathCache.clear();
+    this.finalization = undefined;
+  }
+
   /** Ensure all parent proxies exist for a deep path (part of navigation/wake-up). */
   private ensureIntermediates(path: string, factory: (p: string) => P): void {
     if (!path.includes('.')) return;
 
     this.walkParentPaths(path, (current) => {
-      if (!this.proxies.has(current)) {
+      if (!this.getCachedProxy(current)) {
         factory(current);
       }
       this.mutator.prefetch(current);
@@ -523,9 +485,8 @@ class SolidProxyManager {
   }
 
   make(path: string, factory: (p: string) => P): P {
-    if (this.proxies.has(path)) {
-      return this.proxies.get(path)!;
-    }
+    const cached = this.getCachedProxy(path);
+    if (cached) return cached as P;
 
     const { fn, get } = this.createBaseCallable(path);
     const h = this.createProxyHandler(path, get, factory);
@@ -546,6 +507,8 @@ class SolidProxyManager {
     factory: (p: string) => P
   ): ProxyHandler<object> {
     const self = this;
+    const childCache: Record<string, P> = Object.create(null);
+    let childCacheSize = 0;
 
     return {
       get(_: object, k: PropertyKey) {
@@ -554,14 +517,15 @@ class SolidProxyManager {
         }
 
         const ks = String(k);
-        const cp = self.makeChildPath(path, ks);
 
         switch (ks) {
           case '$val':
+            return get();
           case 'toString':
+            return () => String(get());
           case 'valueOf':
           case 'toJSON':
-            return get();
+            return get;
           case '$signal':
             return get;
           case 'length': {
@@ -586,16 +550,27 @@ class SolidProxyManager {
         // opinia5: $-prefixed aliases so a data key literally named `mutate`/`query`/`select`/… does
         // not shadow the store operations. Back-compat: bare names stay.
         if (isDispatchMethod(ks)) {
+          const cp = self.makeChildPath(path, ks);
           return self.createDispatchHandler(cp, ks);
         }
 
         // Array mutation / query methods
         if (ARRAY_METHODS.has(ks)) {
-          return self.createArrayMethodHandler(path, ks);
+          return self.createArrayMethodHandler(path, ks, get);
         }
 
-        // Default: create child proxy
-        return factory(cp);
+        // Child proxy identity is stable for the store lifetime. A per-parent cache
+        // avoids rebuilding the full path and consulting the global map on every read.
+        const cached = childCache[ks];
+        if (cached) return cached;
+        const child = factory(self.makeChildPath(path, ks));
+        if (childCacheSize >= SolidProxyManager.MAX_CHILD_CACHE_SIZE) {
+          for (const key in childCache) delete childCache[key];
+          childCacheSize = 0;
+        }
+        childCache[ks] = child;
+        childCacheSize++;
+        return child;
       },
 
       set(_: object, k: PropertyKey, v: unknown) {
@@ -608,13 +583,17 @@ class SolidProxyManager {
     };
   }
 
-  /** Central place for registering a new proxy (cache + GC cleanup + initial prefetch). */
+  /** Central place for registering a new proxy (cache + initial prefetch). */
   private registerProxy(path: string, px: P): void {
-    this.proxies.set(path, px);
-    if (this.finalization) {
-      this.finalization.register(px, path);
-    }
+    this.proxies.set(path, new WeakRef(px as object));
+    this.finalization?.register(px, path);
     this.mutator.prefetch(path);
+  }
+
+  private getCachedProxy(path: string): object | undefined {
+    const proxy = this.proxies.get(path)?.deref();
+    if (!proxy) this.proxies.delete(path);
+    return proxy;
   }
 
   private deleteArrayMethodHandlers(path: string): void {
@@ -702,7 +681,7 @@ class SolidProxyManager {
     };
   }
 
-  private createArrayMethodHandler(path: string, method: string): Function {
+  private createArrayMethodHandler(path: string, method: string, get: () => unknown): Function {
     const cacheKey = `${path}\u0000${method}`;
     const cached = this.arrayMethodHandlers.get(cacheKey);
     if (cached) return cached;
@@ -710,7 +689,7 @@ class SolidProxyManager {
     const self = this;
     const handler = (...args: unknown[]) => {
       self.mutator.emitDevAction({ type: 'ARRAY_DISPATCH', payload: { path, method, args } });
-      return (self.mutator as any).arrayOp?.(path, method, args);
+      return (self.mutator as any).arrayOp?.(path, method, args, get());
     };
     this.arrayMethodHandlers.set(cacheKey, handler);
     return handler;
@@ -772,11 +751,13 @@ export function createSolidProxy<T>(mutator: StoreMutator, options: SolidProxyOp
   mutator.bindReactivity?.({
     wakeMutation: (result) => mgr.wakeMutation(result),
     wakeMutations: (results) => mgr.wakeMutations(results),
+    wakeArrayTail: (arrayPath, index, branchReplaced) => mgr.wakeArrayTail(arrayPath, index, branchReplaced),
     wakeArraySplice: (arrayPath, startIndex) => mgr.wakeArraySplice(arrayPath, startIndex),
     addBranchSub: (path) => mgr.addBranchSub(path),
     removeBranchSub: (path) => mgr.removeBranchSub(path),
     wakeSignalPath: (path, mode) => mgr.wakePath(path, mode),
     getProxyMetrics: () => mgr.metrics(),
+    destroy: () => mgr.destroy(),
   });
   const fac = (p: string) => mgr.make(p, fac);
   return mgr.make('', fac) as T;

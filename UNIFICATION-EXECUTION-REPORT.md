@@ -14,7 +14,7 @@
 | 2 | SolidStore delegation (#assign + deleteValue) | SUCCESS | One atomic edit (import + both bodies). All gates green. No revert. Dupe removed. |
 | 3 | Proxy intermediates + sync walks | PARTIAL (import only) | Import added + gated green. Body left untouched — prefetch/identity/proxy contract too critical for zero-risk pass. |
 | 4 | Bridge applyDeepSugarPatch walk | SKIPPED | Left in place (subtle null/undef + isNullOrUndefLeafTarget logic; risk > benefit per protocol "when in doubt, do not touch") |
-| 5 | Create sync enforcer + wire package.json (PLAN §0.3) | SUCCESS | scripts/sync-jsondb-verbatim.ts (defensive, 26 files) + "verify:sync" entry. `bun run verify:sync` PASS. Full gates green. **Major unification win.** |
+| 5 | Create sync enforcer + wire package.json (PLAN §0.3) | SUCCESS | scripts/sync-jsnq-verbatim.ts (defensive, 26 files) + "verify:sync" entry. `bun run verify:sync` PASS. Full gates green. **Major unification win.** |
 | 6 | Final sweep + reports + doc updates | SUCCESS (this report) | All gates re-run clean at end. |
 
 ## Key Deliverables
@@ -25,10 +25,10 @@
 
 ## Evidence (last gates before this report)
 ```
-$ bun test test/jsondb-core-patterns.test.ts
+$ bun test test/jsnq-core-patterns.test.ts
 6 passed, 0 failed
 
-$ bun run test/jsondb-benchmark.ts | tail
+$ bun run test/jsnq-benchmark.ts | tail
 ✅ PASS large-flat-delete-many (36.58ms)
 ✅ PASS root-replace (0.00ms)
 ... all 9 cases PASS
@@ -58,8 +58,8 @@ $ bun run verify:sync
 ## Files Touched (whitelist respected)
 - src/core/SolidStore.ts (logic + import)
 - package.json (new script entry)
-- scripts/sync-jsondb-verbatim.ts (new, approved)
-- UNIFICATION-WORK-LOG.md, UNIFICATION-EXECUTION-REPORT.md, jsondb-optimization-status.md (minor), PLAN.md (footnote), AUDIT.md (minor) — docs only
+- scripts/sync-jsnq-verbatim.ts (new, approved)
+- UNIFICATION-WORK-LOG.md, UNIFICATION-EXECUTION-REPORT.md, jsnq-optimization-status.md (minor), PLAN.md (footnote), AUDIT.md (minor) — docs only
 
 **This completes the unification task handed to the dedicated subagent, executed by supervisor with identical iron discipline when the agent was killed by infra.**
 

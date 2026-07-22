@@ -11,7 +11,7 @@
 
 import { createMemo, createRoot, createSignal } from 'solid-js';
 import { createSolidStore } from '../src';
-import '../src/jsondb';
+import '../src/jsnq';
 
 // Simple helpers (immutable set/get for native signals baseline)
 function getByPath(obj: any, path: string): any {

@@ -14,7 +14,7 @@
 - Subagent (browser-verification reviewer) analyzed demo + spec + latest artifacts: confirmed stronger evidence post recent changes (separate per-mode hooks + panel indicator). Applied its tiny high-value suggestion: separate visual spans in pure-reactivity panel for "WakeUp grained" and "container" (now obviously visible in all future screenshots/manual runs + captured artifacts). Zero duplication/naked logic added; fully consistent with existing patterns.
 
 **Dispatch audit:**
-- Targeted grep across non-verbatim layers: no remaining raw switches/ifs in mutate/pipe/bridge dispatch paths (all routed through named helpers like getJsondbBridge, applyArrayMutation, isArray*Method, warnOnce, etc.). Previous maximization work complete and clean. (Only verbatim synced/ has internal switches – untouched per PLAN.)
+- Targeted grep across non-verbatim layers: no remaining raw switches/ifs in mutate/pipe/bridge dispatch paths (all routed through named helpers like getJsnqBridge, applyArrayMutation, isArray*Method, warnOnce, etc.). Previous maximization work complete and clean. (Only verbatim synced/ has internal switches – untouched per PLAN.)
 
 **Subagent value:**
 - 1 read-only general-purpose reviewer spawned. Delivered focused analysis confirming premium state of wakeup verification + 1 actionable tiny improvement (applied immediately for better visual evidence in Playwright artifacts).

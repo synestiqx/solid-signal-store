@@ -1,6 +1,6 @@
 # Iteration — Full Engine Wakeup/Tracking Refactor (Handlers + Granularity Evidence)
 
-**Focus (per user):** "cały silnik nie tylko jsondb", "refraktor calego silnika", "ma nie byc golej logiki", "wszystko helpery", continue to end without questions. Scheduled 40min-style run.
+**Focus (per user):** "cały silnik nie tylko jsnq", "refraktor calego silnika", "ma nie byc golej logiki", "wszystko helpery", continue to end without questions. Scheduled 40min-style run.
 
 ## Concrete Progress (whole engine, wakeup layer)
 
@@ -28,8 +28,8 @@ This is the "minimal but real demonstration" + evidence requested in todos.
 
 ### 3. Full Stable Verification Gate (no regression)
 - `bun run verify:sync` → ✅ verbatim identical (26 files)
-- `bun test/jsondb-core-patterns.test.ts` → 6/6 passed
-- `bun test/jsondb-benchmark.ts` → all cases ✅ (incl. large-delete, root-replace, deep)
+- `bun test/jsnq-core-patterns.test.ts` → 6/6 passed
+- `bun test/jsnq-benchmark.ts` → all cases ✅ (incl. large-delete, root-replace, deep)
 - `bun run verify` → all extended contracts ✅ + new granularity assertion ✅
 - Zero breakage on proxy identity, prefetch side-effects, computedOf tracking, root key-diff, array fluent, dev events, GC wiring.
 

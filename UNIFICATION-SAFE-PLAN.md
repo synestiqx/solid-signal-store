@@ -5,12 +5,12 @@
 **Primary directive:** COMPLETE the unification of EVERYTHING listed in UNIFICATION-AUDIT.md **with absolute zero regression**. If in ANY doubt — do not change, document, and stop.
 
 ## NON-NEGOTIABLE SAFETY PROTOCOL (violation = immediate self-abort + full revert)
-1. **Read-only first 100%**: Before writing ANY code change, read (in full or relevant sections) EVERY file you are whitelisted to touch + UNIFICATION-AUDIT.md + this plan + PLAN.md + jsondb-optimization-status.md.
+1. **Read-only first 100%**: Before writing ANY code change, read (in full or relevant sections) EVERY file you are whitelisted to touch + UNIFICATION-AUDIT.md + this plan + PLAN.md + jsnq-optimization-status.md.
 2. **One atomic change at a time**: Never batch edits. Use search_replace for ONE precise, minimal, unique-string replacement.
 3. **Test after EVERY edit** (mandatory, no exceptions):
-   - Primary gate (fast & covering): `bun test test/jsondb-core-patterns.test.ts --timeout 30000`
-   - Secondary gate: `bun run test/jsondb-benchmark.ts 2>&1 | tail -30` (must not regress; note any timing >2x previous or new failures)
-   - If browser tests are quick in this env: `bunx playwright test test/browser/jsondb-bench.spec.ts --reporter=line 2>&1 | tail -20` (optional if too slow, but prefer when possible)
+   - Primary gate (fast & covering): `bun test test/jsnq-core-patterns.test.ts --timeout 30000`
+   - Secondary gate: `bun run test/jsnq-benchmark.ts 2>&1 | tail -30` (must not regress; note any timing >2x previous or new failures)
+   - If browser tests are quick in this env: `bunx playwright test test/browser/jsnq-bench.spec.ts --reporter=line 2>&1 | tail -20` (optional if too slow, but prefer when possible)
    - Capture **full** stdout/stderr of the test commands into your work log.
 4. **On ANY failure (even 1 test, even warning that looks suspicious, even "but it was already flaky")**:
    - IMMEDIATELY run `git checkout -- <the-exact-file-you-just-edited>` (worktree git is available)
@@ -19,7 +19,7 @@
    - Produce final report with the failure + proof of revert + "TASK ABORTED FOR SAFETY — NO REGRESSION INTRODUCED"
    - Exit with clear signal to supervisor.
 5. **Never touch**:
-   - Anything under `src/jsondb/synced/**` (even reading for "inspiration" — use canonical store4/store/jsondb/ only for the sync script)
+   - Anything under `src/jsnq/synced/**` (even reading for "inspiration" — use canonical store4/store/jsnq/ only for the sync script)
    - Any file not in the whitelist in AUDIT §5
    - package.json "scripts" in a way that removes existing entries
 6. **Behavior preservation is sacred**: Proxy identity, cursor prefetch side-effects, root key-diff commit, null/undef sugar patch handling, large-array delete perf (<20ms on 1200 items), deep 15-level nesting, all devtool event shapes — if a test exercises it, it must behave identically post-edit (not "better", identical).
@@ -36,16 +36,16 @@
 ## ORDERED TASKS (execute strictly in sequence — do not reorder or skip)
 
 ### TASK 0: Preparation & Confirmation (read-only, always succeeds)
-- Read full: UNIFICATION-AUDIT.md, this SAFE-PLAN, PLAN.md (at least sections 0.3, 0.4, 4, Appendix), jsondb-optimization-status.md (latest "Path Unification" section), ARCHITECTURE.md.
+- Read full: UNIFICATION-AUDIT.md, this SAFE-PLAN, PLAN.md (at least sections 0.3, 0.4, 4, Appendix), jsnq-optimization-status.md (latest "Path Unification" section), ARCHITECTURE.md.
 - Read full source of all whitelist targets:
   - src/internal/path.ts
   - src/core/SolidStore.ts (full)
   - src/proxy/solid-proxy.ts (full)
-  - src/jsondb/solid-pipeline-bridge.ts (full)
+  - src/jsnq/solid-pipeline-bridge.ts (full)
   - package.json
 - Run initial baseline gates (no edits yet):
-  - `bun test test/jsondb-core-patterns.test.ts`
-  - `bun run test/jsondb-benchmark.ts 2>&1 | tail -40`
+  - `bun test test/jsnq-core-patterns.test.ts`
+  - `bun run test/jsnq-benchmark.ts 2>&1 | tail -40`
 - Create (or truncate+header) `UNIFICATION-WORK-LOG.md` with timestamp + "BASELINE GREEN — starting safe unification".
 - Append to log: "TASK 0 COMPLETE — all reads done, baseline tests green. Proceeding only if protocol allows."
 
@@ -113,21 +113,21 @@ export function ensurePathIn(target: any, segments: PathSegments): any {
 - If any hesitation → **leave the walk in place**, document "deferred — sugar patch too subtle for safe extraction in this pass", and proceed to TASK 5. Do not touch bridge unless the replacement is trivially equivalent.
 - **Double test gates** (core + benchmark) after any edit to this file.
 
-### TASK 5: Create the mechanical jsondb sync enforcer (the missing PLAN §0.3 piece)
+### TASK 5: Create the mechanical jsnq sync enforcer (the missing PLAN §0.3 piece)
 - Create directory if needed: use terminal `mkdir -p scripts`
-- Write a new file `scripts/sync-jsondb-verbatim.ts` (Bun/Node executable, shebang optional).
+- Write a new file `scripts/sync-jsnq-verbatim.ts` (Bun/Node executable, shebang optional).
   - It must:
     - Define the exact allowed runtime file list (core/*.ts except specs, operators/*.ts, index.ts, README.md, SYNC_HEADER.txt).
-    - For each: compute relative path, read canonical from `../../store/jsondb/<rel>` (from scripts/ cwd), read local `../src/jsondb/synced/<rel>`.
+    - For each: compute relative path, read canonical from `../../store/jsnq/<rel>` (from scripts/ cwd), read local `../src/jsnq/synced/<rel>`.
     - Byte-compare or content-compare.
     - On ANY difference (or missing file on one side): print unified diff (use simple string diff or Bun's), print "DRIFT DETECTED — verbatim rule violated", exit(1).
-    - On clean match: print "OK — jsondb synced/ is verbatim copy of canonical (runtime subset)", exit(0).
-  - Make it runnable via `bun scripts/sync-jsondb-verbatim.ts`
+    - On clean match: print "OK — jsnq synced/ is verbatim copy of canonical (runtime subset)", exit(0).
+  - Make it runnable via `bun scripts/sync-jsnq-verbatim.ts`
 - Update package.json (one edit):
   - Add under "scripts":
     ```json
-    "verify:sync": "bun scripts/sync-jsondb-verbatim.ts",
-    "pretest": "bun run verify:sync || (echo 'FATAL: jsondb drift — run sync first' && exit 1)"
+    "verify:sync": "bun scripts/sync-jsnq-verbatim.ts",
+    "pretest": "bun run verify:sync || (echo 'FATAL: jsnq drift — run sync first' && exit 1)"
     ```
     (Note: pretest may be too aggressive for dev; alternatively just "verify:sync" and document that CI must call it. Prefer the verify entry + mention in README if needed. Choose the least invasive that still makes the rule mechanical.)
 - **After package.json edit + new script creation**: run `bun run verify:sync` as the test gate. It must pass (since we will make the script correct against current state).
@@ -136,7 +136,7 @@ export function ensurePathIn(target: any, segments: PathSegments): any {
 
 ### TASK 6: Final verification sweep + docs
 - Run the full gates one last time (core test + benchmark + optional browser if env allows quick run).
-- Update (append) jsondb-optimization-status.md with a short "Full micro-path unification + sync enforcement completed safely by dedicated subagent" paragraph + date + "zero regression" note.
+- Update (append) jsnq-optimization-status.md with a short "Full micro-path unification + sync enforcement completed safely by dedicated subagent" paragraph + date + "zero regression" note.
 - Append a 5-line footnote to PLAN.md under the relevant Critic section.
 - Create `UNIFICATION-EXECUTION-REPORT.md` with all required content per protocol §10.
 - Update this SAFE-PLAN or AUDIT only if needed for final status (minimal).

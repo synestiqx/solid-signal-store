@@ -9,7 +9,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'store-solid': resolve(__dirname, '../../src'),
+      solidstore: resolve(__dirname, '../../src'),
     },
   },
 });

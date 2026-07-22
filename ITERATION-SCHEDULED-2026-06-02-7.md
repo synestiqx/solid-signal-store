@@ -12,13 +12,13 @@
 
 ## Playwright Verification Reliability (key concrete progress)
 - Targeted run of the isolated test (`isolated pure reactivity contracts (wakeUp grained/container on xlarge + others)`) executed cleanly and **passed in ~9s**.
-- Fresh dedicated artifact generated: `test-results/jsondb-pure-reactivity-isolated.png` (full-page screenshot after the "▶ Pure Reactivity Checks" button).
+- Fresh dedicated artifact generated: `test-results/jsnq-pure-reactivity-isolated.png` (full-page screenshot after the "▶ Pure Reactivity Checks" button).
 - Strong, reliable evidence captured (confirmed by subagent review):
   - Explicit log: `PURE REACTIVITY: wakeUp grained/container exercised on xlarge (large dataset)`
   - All three dedicated `__TEST_WAKEUP_*` hooks set and asserted
   - Separate visual indicators in the pure-reactivity-panel
   - Supporting pure contract logs + timing
-- Subagent (read-only browser-artifact reviewer) spawned: confirmed the isolation successfully eliminates starvation from unrelated jsondb data asserts. The logger import fix (to `'store-solid'` alias) continues to keep the demo loading cleanly. Evidence strength for the observer-added + refined wakeUp grained/container on xlarge feature is now **strong and reliable** in dedicated Playwright artifacts. One tiny cosmetic suggestion noted (make panel indicators reactive for live ✓ in screenshots) — low priority since hooks + logs are already robust.
+- Subagent (read-only browser-artifact reviewer) spawned: confirmed the isolation successfully eliminates starvation from unrelated jsnq data asserts. The logger import fix (to `'store-solid'` alias) continues to keep the demo loading cleanly. Evidence strength for the observer-added + refined wakeUp grained/container on xlarge feature is now **strong and reliable** in dedicated Playwright artifacts. One tiny cosmetic suggestion noted (make panel indicators reactive for live ✓ in screenshots) — low priority since hooks + logs are already robust.
 
 This directly advances the "weryfikacja przez Playwright z logami i screenami" goal for the premium whole-engine wakeup feature on larger data, in a non-flaky, independent way.
 
@@ -32,7 +32,7 @@ This directly advances the "weryfikacja przez Playwright z logami i screenami" g
 - Zero duplication, whole-engine balance, premium minimal code.
 
 **Concrete artifacts this iteration:**
-- Fresh `test-results/jsondb-pure-reactivity-isolated.png` (dedicated, reliable)
+- Fresh `test-results/jsnq-pure-reactivity-isolated.png` (dedicated, reliable)
 - Subagent report (evidence confirmation)
 - This note + cross-refs in prior ITERATION-*.md
 

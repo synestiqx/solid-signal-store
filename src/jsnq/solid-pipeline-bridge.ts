@@ -1,9 +1,9 @@
 /**
  * solid-pipeline-bridge.ts
- * Thin Solid integration layer under jsondb/.
+ * Thin Solid integration layer under jsnq/.
  *
- * Reusable JsonDB logic is imported from @synestiqx/jsondb.
- * This bridge may differ; shared data-engine is exported through @synestiqx/jsondb/data-engine.
+ * Reusable JSNQ logic is imported from @synestiqx/jsnq.
+ * This bridge may differ; shared data-engine is exported through @synestiqx/jsnq/data-engine.
  *
  * Every reusable fast path now lives in the shared library
  * (synced/core/pipeline-fastpath.ts): the flat-array where+actions COW engine,
@@ -14,16 +14,15 @@
  * fallback that never throws into the reactive graph.
  */
 
-import { PipelineWrapper } from '@synestiqx/jsondb/core/pipeline-wrapper';
-import { cloneJsonData as cloneJson } from '@synestiqx/jsondb/core/data-engine';
+import { PipelineWrapper } from '@synestiqx/jsnq/core/pipeline-wrapper';
+import { cloneJsonData as cloneJson } from '@synestiqx/jsnq/core/data-engine';
 import {
   applyDeepSugarPatch,
-  collectFlatValueActionPaths,
   collectPipelineIntent,
   isDeepSugarAction,
   tryFastPipelineMutation,
   tryFastStructuralMutation,
-} from '@synestiqx/jsondb/core/pipeline-fastpath';
+} from '@synestiqx/jsnq/core/pipeline-fastpath';
 
 export interface SolidPipelineOptions {
   isRoot?: boolean;
@@ -37,9 +36,11 @@ export interface SolidPipelineOptions {
    *    silent no-op (e.g. moveTo('bad.target') becoming a swallowed warning).
    */
   bridgeErrorMode?: 'throw' | 'warn' | 'silent';
+  /** Collect per-match operation strings only while development diagnostics are active. */
+  trackOperations?: boolean;
 }
 
-export interface SolidJsondbBridge {
+export interface SolidJsnqBridge {
   applyPipelineMutation: typeof applyPipelineMutation;
   applyPipelineMutationDetailed: typeof applyPipelineMutationDetailed;
   createPipeline: typeof createPipeline;
@@ -73,22 +74,22 @@ export function applyPipelineMutation(
     if (isRoot && ops.length === 1) {
       const op = ops[0];
       if (op && typeof op === 'object' && !op.__isMutation) {
-        return structuredClone(op);
+        return cloneJson(op);
       }
       if (op && op.__isMutation) {
         if (op.type === 'replace' && (typeof op.key === 'undefined' || op.key === '' || op.key === null)) {
           const val = typeof op.value === 'function' ? op.value(currentValue) : op.value;
-          return structuredClone(val);
+          return cloneJson(val);
         }
         // Also handle raw replace object at root
         if (op.type === 'replace' && typeof op.key === 'object') {
-          return structuredClone(op.key);
+          return cloneJson(op.key);
         }
       }
     }
 
     // === Ultra-fast path: flat array + where + value actions (shared COW engine) ===
-    const fast = tryFastPipelineMutation(currentValue, ops);
+    const fast = tryFastPipelineMutation(currentValue, ops, { collectAffectedPaths: false });
     if (fast) return fast.value;
 
     const intent = collectPipelineIntent(ops);
@@ -108,7 +109,10 @@ export function applyPipelineMutation(
     // Wrapped defensively to guarantee no crashes even on unexpected null/undefined
     // edge cases that reach here (sugar forms with non-string keys are pre-routed).
     try {
-      const wrapper = new PipelineWrapper(currentValue as any, { autoClone: true });
+      const wrapper = new PipelineWrapper(currentValue as any, {
+        autoClone: true,
+        trackOperations: options.trackOperations ?? false,
+      });
       wrapper.pipeline(...(ops as any));
       wrapper.execute('all');
       return wrapper.data;
@@ -143,29 +147,36 @@ export function applyPipelineMutationDetailed(
   currentValue: unknown,
   options: SolidPipelineOptions = {}
 ): DetailedMutationResult {
-  const value = applyPipelineMutation(ops, currentValue, options);
-  return { value, mutations: collectFlatValueActionPaths(currentValue, ops) };
+  if (ops && ops.length > 0) {
+    const fast = tryFastPipelineMutation(currentValue, ops);
+    if (fast) return { value: fast.value, mutations: fast.affectedPaths };
+  }
+  return { value: applyPipelineMutation(ops, currentValue, options), mutations: null };
 }
 
 export function createPipeline(currentValue: unknown, ops: any[], options: SolidPipelineOptions = {}) {
-  const wrapper = new PipelineWrapper(currentValue as any, { autoClone: true });
+  const hasMutations = collectPipelineIntent(ops).actions.length > 0;
+  const wrapper = new PipelineWrapper(currentValue as any, {
+    autoClone: hasMutations,
+    trackOperations: options.trackOperations ?? false,
+  });
   if (ops && ops.length > 0) {
     wrapper.pipeline(...(ops as any));
   }
   return wrapper;
 }
 
-export const solidJsondbBridge: SolidJsondbBridge = {
+export const solidJsnqBridge: SolidJsnqBridge = {
   applyPipelineMutation,
   applyPipelineMutationDetailed,
   createPipeline,
 };
 
-export function registerSolidJsondbBridge(target: any = globalThis): SolidJsondbBridge {
-  target.__SOLID_PIPELINE_BRIDGE = solidJsondbBridge;
-  target.solidJsondbBridge = solidJsondbBridge;
-  return solidJsondbBridge;
+export function registerSolidJsnqBridge(target: any = globalThis): SolidJsnqBridge {
+  target.__SOLID_PIPELINE_BRIDGE = solidJsnqBridge;
+  target.solidJsnqBridge = solidJsnqBridge;
+  return solidJsnqBridge;
 }
 
-// Backward-compatible side effect for `import "solidstore/jsondb"`.
-registerSolidJsondbBridge();
+// Optional side effect for `import "solidstore/jsnq"`.
+registerSolidJsnqBridge();

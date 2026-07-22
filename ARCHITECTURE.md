@@ -6,7 +6,7 @@
 **Nienaruszalne zasady (po recenzji Critica):**
 
 1. **Zero duplication from line 1** — mechanicznie egzekwowane (patrz PLAN.md § "Mechanical Duplication Prevention").
-2. **Jsondb jest prawie nietykalny** — tylko jeden dozwolony plik: `src/jsondb/solid-pipeline-bridge.ts`. Żadne inne pliki w `jsondb/` nie mogą być modyfikowane względem oryginału z `store4/store/jsondb/`.
+2. **Jsnq jest prawie nietykalny** — tylko jeden dozwolony plik: `src/jsnq/solid-pipeline-bridge.ts`. Żadne inne pliki w `jsnq/` nie mogą być modyfikowane względem oryginału z `store4/store/jsnq/`.
 3. **Maksymalny minimalizm** — każdy plik i linia musi mieć uzasadnienie. Surowe budżety LOC (patrz PLAN.md).
 4. **Pełna parność API + observable behavior** — włącznie z subtelnymi kontraktami (cursor prefetch side-effects, root mutation key-diff, proxy identity, devtools event shapes, FinalizationRegistry/GC cleanup).
 5. **Solid jako podstawa** — nie walczymy z frameworkiem. Automatyczny tracking + `batch()` + `createMemo` zastępują prawie cały poprzedni system wersjonowania.
@@ -28,8 +28,8 @@ store4/store-solid/
 │   │   └── solid-proxy.ts      # #1 najwyższa dźwignia (< 320 LOC hard cap)
 │   ├── array/
 │   │   └── solid-array.ts
-│   ├── jsondb/
-│   │   └── solid-pipeline-bridge.ts   # JEDYNY nowy plik pod jsondb
+│   ├── jsnq/
+│   │   └── solid-pipeline-bridge.ts   # JEDYNY nowy plik pod jsnq
 │   └── devtools/
 │       └── solid-devtools.ts
 ├── PLAN.md                     # <--- JEDYNE wiążące źródło implementacji
@@ -44,7 +44,7 @@ store4/store-solid/
 **Najwyższe dźwignie (kolejność implementacji):**
 1. `proxy/solid-proxy.ts`
 2. `core/SolidStore.ts`
-3. `jsondb/solid-pipeline-bridge.ts`
+3. `jsnq/solid-pipeline-bridge.ts`
 4. `array/solid-array.ts`
 
 Wszystkie decyzje szczegółowe, kontrakty, budżety LOC, fazy i wymagania po recenzji Critica znajdują się w **PLAN.md**.

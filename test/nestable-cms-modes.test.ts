@@ -1,11 +1,11 @@
 import { createEffect, createRoot } from 'solid-js';
 import { createSolidStore } from '../src';
-import '../src/jsondb';
-import where from '@synestiqx/jsondb/operators/where';
-import update from '@synestiqx/jsondb/operators/update';
-import moveToMatches from '@synestiqx/jsondb/operators/moveToMatches';
+import '../src/jsnq';
+import where from '@synestiqx/jsnq/operators/where';
+import update from '@synestiqx/jsnq/operators/update';
+import moveToMatches from '@synestiqx/jsnq/operators/moveToMatches';
 
-type NestableMode = 'jsondb' | 'direct' | 'native';
+type NestableMode = 'jsnq' | 'direct' | 'native';
 type NestableMovePosition = 'before' | 'after' | 'child';
 type NestableWakeMode = 'grained' | 'container';
 
@@ -189,7 +189,7 @@ function runScenario(mode: NestableMode, batch: boolean, wakeMode: NestableWakeM
 
     for (const step of steps) {
       runWrite(() => {
-        if (mode === 'jsondb') {
+        if (mode === 'jsnq') {
           const insertPosition = step.position === 'child' ? 'inside' : step.position;
           store.nestable.page.fields.mutate(
             where('id', '===', step.sourceId),
@@ -207,7 +207,7 @@ function runScenario(mode: NestableMode, batch: boolean, wakeMode: NestableWakeM
     assertExpected(store.nestable.page.fields(), `${mode}/${batch}/${wakeMode}: callable read after CMS sequence`);
 
     runWrite(() => {
-      if (mode === 'jsondb') {
+      if (mode === 'jsnq') {
         store.nestable.page.fields.mutate(where('id', '===', 'settings'), update('expanded', (value: boolean) => !value));
         api.setValue('nestable.page.fields', refresh(structuredClone(readFields())));
       } else {
@@ -235,10 +235,10 @@ function runScenario(mode: NestableMode, batch: boolean, wakeMode: NestableWakeM
 }
 
 const results = [
-  runScenario('jsondb', false, 'grained'),
-  runScenario('jsondb', true, 'grained'),
-  runScenario('jsondb', false, 'container'),
-  runScenario('jsondb', true, 'container'),
+  runScenario('jsnq', false, 'grained'),
+  runScenario('jsnq', true, 'grained'),
+  runScenario('jsnq', false, 'container'),
+  runScenario('jsnq', true, 'container'),
   runScenario('direct', false, 'grained'),
   runScenario('direct', true, 'grained'),
   runScenario('direct', false, 'container'),

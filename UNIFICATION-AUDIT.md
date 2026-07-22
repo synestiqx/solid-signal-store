@@ -10,7 +10,7 @@
 - Delegations confirmed (no local reimpls):
   - utils/path-utils.ts (thin adapter, preserves API)
   - core/SolidStore.ts (all #get/#set/#clone + split in walks)
-  - jsondb/solid-pipeline-bridge.ts (getBySegments + cloneJson in fast paths + sugar)
+  - jsnq/solid-pipeline-bridge.ts (getBySegments + cloneJson in fast paths + sugar)
   - proxy/solid-proxy.ts (only splitPath for intermediates/sync)
 - Re-export: InternalPath from index.ts
 - Zero regression proven in prior runs (core patterns 6/6 + full browser Playwright with data asserts + perf screenshots + large delete + root ops).
@@ -25,22 +25,22 @@ Locations with **near-identical 3-8 line** "walk segments, handle prefix, get pa
 - **proxy/solid-proxy.ts**:
   - `intermediates(...)` (~61-69): prefix walk + factory + prefetch
   - `sync(changed)` prefix build loop (~48-58)
-- **jsondb/solid-pipeline-bridge.ts**:
+- **jsnq/solid-pipeline-bridge.ts**:
   - `applyDeepSugarPatch(...)` (~323-332): walk `parentSegs` on the *cloned result* to build/ensure target for patch assign + null/undef special case handling
 
 **Impact:** ~20-25 lines of nearly-duplicate traversal. Extracting 2-3 pure helpers to internal/path.ts (e.g. `getParentSegments`, `resolveParentAndKey`, optional `ensureSegments` for creation-in-clone) removes the last path-related dupe while keeping behavior 100% identical.
-**Risk:** Very low if helpers are pure + covered by existing tests (sugar patch, root commits, proxy deep gets/sets, array filtered updates, deleteValue paths all exercised in jsondb-core-patterns + browser specs + benchmark).
+**Risk:** Very low if helpers are pure + covered by existing tests (sugar patch, root commits, proxy deep gets/sets, array filtered updates, deleteValue paths all exercised in jsnq-core-patterns + browser specs + benchmark).
 **Budget:** Adding <30 LOC to internal/path.ts still keeps overall layer tiny.
 **Rule:** Must preserve exact root/empty path / null / undef semantics of each callsite.
 
-### 2.2 Missing mechanical sync enforcement for jsondb verbatim copy (PLAN.md v2 §0.3 — CRITICAL GAP)
+### 2.2 Missing mechanical sync enforcement for jsnq verbatim copy (PLAN.md v2 §0.3 — CRITICAL GAP)
 - No `scripts/` dir.
-- No sync script (e.g. `sync-jsondb-verbatim.ts` or .sh) that:
-  - Compares the *runtime* subset of `src/jsondb/synced/{core,operators,index.ts,README.md}` against canonical `store4/store/jsondb/` (ignore examples/, *.spec.ts, bckup/).
+- No sync script (e.g. `sync-jsnq-verbatim.ts` or .sh) that:
+  - Compares the *runtime* subset of `src/jsnq/synced/{core,operators,index.ts,README.md}` against canonical `store4/store/jsnq/` (ignore examples/, *.spec.ts, bckup/).
   - Fails hard (exit 1) + prints unified diff on ANY content or structural drift.
   - Optionally auto-copies with header stamp on explicit "sync" command (but default = verify only).
-- package.json has no "verify:sync", "test:jsondb-parity" or pre-test step invoking it.
-- Result: the "verbatim + only bridge allowed" rule is documented but **not mechanically enforced** today. This is incomplete unification of the "zero duplication of jsondb logic" mandate.
+- package.json has no "verify:sync", "test:jsnq-parity" or pre-test step invoking it.
+- Result: the "verbatim + only bridge allowed" rule is documented but **not mechanically enforced** today. This is incomplete unification of the "zero duplication of jsnq logic" mandate.
 
 **Action:** Create minimal enforcer + wire it. This is pure infra (no behavior change to store). Safe.
 
@@ -64,9 +64,9 @@ These are **performance-critical hot paths** (validated by benchmarks + browser 
 - No other repeated complex algorithms.
 
 ## 3. OUT OF SCOPE / FORBIDDEN (per user + PLAN)
-- Any edit under `src/jsondb/synced/` (verbatim forever; only the future sync script may read/compare).
+- Any edit under `src/jsnq/synced/` (verbatim forever; only the future sync script may read/compare).
 - New folders (reactivity/, computed/ etc.).
-- New files except: the sync script (in scripts/ or root as `scripts/sync-jsondb-verbatim.ts`) + updates to package.json + docs.
+- New files except: the sync script (in scripts/ or root as `scripts/sync-jsnq-verbatim.ts`) + updates to package.json + docs.
 - Any change that increases LOC beyond hard caps without immediate Critic review.
 - Performance "optimizations" that are not pure extractions.
 - Touching browser demo, playwright specs, or benchmark unless a test-only helper is required for verification (avoid).
@@ -83,10 +83,10 @@ These are **performance-critical hot paths** (validated by benchmarks + browser 
 1. src/internal/path.ts (add 2-4 tiny pure helpers + JSDoc)
 2. src/core/SolidStore.ts (replace 2 walks with helper calls)
 3. src/proxy/solid-proxy.ts (replace 2 walks with helper calls)
-4. src/jsondb/solid-pipeline-bridge.ts (replace 1 walk with helper if it fits cleanly; else leave)
+4. src/jsnq/solid-pipeline-bridge.ts (replace 1 walk with helper if it fits cleanly; else leave)
 5. package.json (add 1-2 script entries)
-6. New: scripts/sync-jsondb-verbatim.ts (or .js if preferred; ~40-60 LOC max, pure Node/Bun fs + diff)
-7. Docs only: UNIFICATION-AUDIT.md (update status), jsondb-optimization-status.md (add entry), PLAN.md (footnote), UNIFICATION-SAFE-PLAN.md (if needed), and the execution report.
+6. New: scripts/sync-jsnq-verbatim.ts (or .js if preferred; ~40-60 LOC max, pure Node/Bun fs + diff)
+7. Docs only: UNIFICATION-AUDIT.md (update status), jsnq-optimization-status.md (add entry), PLAN.md (footnote), UNIFICATION-SAFE-PLAN.md (if needed), and the execution report.
 
 Any other file = immediate abort + revert.
 

@@ -1,7 +1,7 @@
 /**
  * SolidStore.ts — single central orchestrator (CreateStore + SignalStore parity).
  * Wires createSolidProxy + narrow StoreMutator. Real in-memory root.
- * Jsondb bridge dispatch for mutate/pipe (future solid-pipeline-bridge).
+ * Jsnq bridge dispatch for mutate/pipe (future solid-pipeline-bridge).
  * Full public surface, headless/vanilla, batch(), zero logic dupe (proxy/bridge own theirs).
  * Per PLAN.md v2 + Critic: minimal, clean, contracts (proxy identity, prefetch, root key-diff, dev shapes, cleanup).
  */
@@ -21,17 +21,24 @@ import {
   deleteJsonPath,
   readJsonPath,
   writeJsonPath,
+  writeJsonPathValue,
   type JsonMutationResult,
-} from '@synestiqx/jsondb/data-engine';
+} from '@synestiqx/jsnq/data-engine';
 import { createProjectionObservable, type ProjectionObservableOptions } from './rx-interop';
-import { SolidDevService, type DevStream, type DevToolsEvent as SolidDevToolsEvent } from './dev-service';
-import type { SolidJsondbBridge } from '../jsondb/solid-pipeline-bridge';
+import {
+  EMPTY_DEV_STREAM,
+  type DevStream,
+  type DevToolsEvent as SolidDevToolsEvent,
+  type SolidDevtoolsAdapter,
+  type StoreDevToolsAction,
+} from './devtools-contract';
+import type { SolidJsnqBridge } from '../jsnq/solid-pipeline-bridge';
 import type { SolidStoreProxy, SolidStoreReactivity } from './proxy-types';
 
 // --- Minimal local contracts (no reliance on incomplete synced types) ---
 
 /**
- * opinia5: reactive jsondb query handle. Callable for the current result, `.subscribe()` for a
+ * opinia5: reactive jsnq query handle. Callable for the current result, `.subscribe()` for a
  * push subscription (reuses the rx-interop projection observable), `.dispose()` to release the
  * per-query branch interest. Same `where(...)` DSL as `mutate`.
  */
@@ -62,10 +69,10 @@ export interface SolidStoreOptions {
   wakeParentsOnChange?: boolean;
 
   // future: dependencyMode, cloneStrategy etc for parity
-  jsondbBridge?: SolidJsondbBridge;
+  jsnqBridge?: SolidJsnqBridge;
 
   /**
-   * How the jsondb bridge reacts to a mutation execution error.
+   * How the jsnq bridge reacts to a mutation execution error.
    *  - 'warn' (default): log + safe no-op clone (historical behaviour, unchanged).
    *  - 'silent': safe no-op clone without logging.
    *  - 'throw': surface the real error (recommended in development).
@@ -84,18 +91,15 @@ export interface SolidStoreOptions {
    */
   preciseMutationWake?: boolean;
 
+  /** Optional development-only event stream adapter from `solidstore/devtools`. */
+  devtools?: SolidDevtoolsAdapter;
+
   /**
    * Internal test hook: invoked with the path on every signal-update CALL. Lets contract
    * tests prove wake *work* granularity without prototype hacks. Forwarded to SolidProxyOptions.
    */
   _onSignalUpdate?: (path: string) => void;
 }
-
-export type StoreDevToolsAction = {
-  type: string;
-  payload?: Record<string, unknown>;
-  storeName?: string;
-};
 
 type DevListener = (e: StoreDevToolsAction & { storeName?: string }) => void;
 const GLOBAL_WAKE_MODES = new Set<SolidWakeMode>(['grained', 'fine', 'exact', 'container', 'parents', 'leaf', 'branch']);
@@ -114,6 +118,27 @@ export function onSolidDevAction(fn: DevListener): () => void {
 
 // Named store registry (useSolidStore + createStore(name) parity with SignalStore)
 const registry = new Map<string, SolidStore<any>>();
+type StoreWaiter = {
+  resolve(store: SolidStore<any>): void;
+  reject(error: Error): void;
+  cleanup(): void;
+};
+const registryWaiters = new Map<string, Set<StoreWaiter>>();
+
+export interface WaitForStoreOptions {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}
+
+function resolveRegistryWaiters(name: string, store: SolidStore<any>): void {
+  const waiters = registryWaiters.get(name);
+  if (!waiters) return;
+  registryWaiters.delete(name);
+  for (const waiter of waiters) {
+    waiter.cleanup();
+    waiter.resolve(store);
+  }
+}
 
 // --- Orchestrator ---
 
@@ -121,25 +146,28 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   readonly store: SolidStoreProxy<T>; // the callable proxied reactive root (full surface via traps)
   private readonly data: T;
   private name: string;
+  private readonly registryName: string;
   private devActive = false;
   private readonly opts: SolidStoreOptions;
   // Typed reactivity surface installed by createSolidProxy (replaces `(this as any).__wakeX`).
   private reactivity?: SolidStoreReactivity;
   // Typed wake-parents flag (read by the proxy manager's shouldWakeParents getter).
   _wakeParentsOnChange = false;
-  // Per-store devtools stream service (parity with Angular DevService).
-  private readonly devService = new SolidDevService();
+  private devService?: SolidDevtoolsAdapter;
+  private destroyed = false;
   /** Action stream (subscribe for SET_VALUE/MUTATE/DELETE/PROXY_METRICS events). */
-  readonly devAction$: DevStream = this.devService.action$;
+  get devAction$(): DevStream { return this.devService?.action$ ?? EMPTY_DEV_STREAM; }
   /** Read/history stream (excludes PROXY_METRICS, parity with Angular readAction$). */
-  readonly devReadAction$: DevStream = this.devService.readAction$;
+  get devReadAction$(): DevStream { return this.devService?.readAction$ ?? EMPTY_DEV_STREAM; }
 
   /** Typed binding called by createSolidProxy so the store can wake proxy-owned signals. */
   bindReactivity(api: SolidStoreReactivity): void { this.reactivity = api; }
 
   constructor(initial: T, name = 'default', opts: SolidStoreOptions = {}) {
     this.name = name;
+    this.registryName = name;
     this.opts = opts;
+    this.devService = opts.devtools;
     this.data = this.#clone(initial ?? ({} as T));
 
     const mutator = this as unknown as StoreMutator;
@@ -153,6 +181,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     this.store = createSolidProxy<SolidStoreProxy<T>>(mutator, pOpts);
 
     registry.set(name, this);
+    resolveRegistryWaiters(name, this);
   }
 
   // --- Path orchestration (delegates to unified internal primitives) ---
@@ -170,6 +199,10 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
 
   #set(p: string, v: unknown): JsonMutationResult {
     return writeJsonPath(this.data, p, v);
+  }
+
+  #setValueOnly(p: string, v: unknown): void {
+    writeJsonPathValue(this.data, p, v);
   }
 
   #delete(p: string): JsonMutationResult {
@@ -266,7 +299,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   // wake only the changed leaves + the branch signal itself — NOT the whole subtree.
   // Branch subscribers ($liveQuery) still wake via the ancestor walk in wakeFromMutation.
   #commitPrecise(p: string, v: unknown, relPaths: readonly string[]): void {
-    this.#set(p, v); // data write only; no proxy branch-wide wake
+    this.#setValueOnly(p, v); // data write only; no proxy branch-wide wake
     const results: JsonMutationResult[] = [];
     for (const rel of relPaths) {
       const leaf = `${p}.${rel}`;
@@ -289,8 +322,8 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     if (!this.devActive) return;
     const event = { ...action, storeName: this.name } as SolidDevToolsEvent;
     // Per-store typed stream (parity with Angular DevService.action$ / readAction$).
-    this.devService.emitAction(event);
-    if (action.type !== 'PROXY_METRICS') this.devService.emitRead(event);
+    this.devService?.emitAction(event);
+    if (action.type !== 'PROXY_METRICS') this.devService?.emitRead(event);
     // Legacy global bus kept for back-compat (onSolidDevAction public API).
     queueMicrotask(() => emitDev(event));
   }
@@ -318,8 +351,8 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   }
 
   // Direct array method dispatch from proxy (store.users.push etc.)
-  arrayOp(path: string, method: string, args: unknown[] = []): unknown {
-    const cur = this.#get(path);
+  arrayOp(path: string, method: string, args: unknown[] = [], current?: unknown): unknown {
+    const cur = Array.isArray(current) ? current : this.#get(path);
     if (!Array.isArray(cur)) return undefined;
 
     // Query-only fast path (no mutation, no COW)
@@ -357,36 +390,23 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     // Note: the proxy's array-method handler already emits the ARRAY_DISPATCH dev event before
     // calling arrayOp, so we must NOT emit it again here (would double-log push/pop). (self-review)
     if (method === 'push') {
-      // Native push() with no args returns length and changes nothing — skip the copy + wake. (self-review)
+      // Native push() with no args returns length and changes nothing.
       if (args.length === 0) return { result: cur.length };
       const startIndex = cur.length;
-      const next = cur.slice();
-      args.length === 1 ? next.push(args[0]) : next.push(...args);
-      this.#set(path, next);
+      const nextLength = args.length === 1 ? cur.push(args[0]) : cur.push(...args);
       this.batch(() => {
-        const results: JsonMutationResult[] = [
-          createMutationResult({ path, kind: 'set', previous: cur, next, existed: true, changed: [path], branchReplaced: false, affectedPaths: [path] }),
-        ];
         for (let i = 0; i < args.length; i++) {
-          const ip = `${path}.${startIndex + i}`;
-          results.push(createMutationResult({ path: ip, kind: 'set', next: args[i], existed: false, inserted: [ip], branchReplaced: this.#isBranchValue(args[i]), affectedPaths: [ip] }));
+          this.reactivity?.wakeArrayTail(path, startIndex + i, this.#isBranchValue(args[i]));
         }
-        this.#wakeMutations(results);
       });
-      return { result: next.length };
+      return { result: nextLength };
     }
     if (method === 'pop') {
       if (cur.length === 0) return { result: undefined };
       const lastIndex = cur.length - 1;
-      const popped = cur[lastIndex];
-      const next = cur.slice(0, lastIndex);
-      this.#set(path, next);
-      const lp = `${path}.${lastIndex}`;
+      const popped = cur.pop();
       this.batch(() => {
-        this.#wakeMutations([
-          createMutationResult({ path, kind: 'set', previous: cur, next, existed: true, changed: [path], branchReplaced: false, affectedPaths: [path] }),
-          createMutationResult({ path: lp, kind: 'delete', previous: popped, existed: true, deleted: [lp], branchReplaced: this.#isBranchValue(popped), affectedPaths: [lp] }),
-        ]);
+        this.reactivity?.wakeArrayTail(path, lastIndex, this.#isBranchValue(popped));
       });
       return { result: popped };
     }
@@ -405,7 +425,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     if (start <= 0) return null; // no untouched prefix to skip
     const next = [...cur];
     const removed = applyArrayMutation(next, 'splice', args);
-    this.#set(path, next);
+    this.#setValueOnly(path, next);
     this.batch(() => {
       this.reactivity?.wakeArraySplice(path, start);
     });
@@ -421,19 +441,20 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   }
 
   // === Bridge access (extracted — removes repeated globalThis lookup + warn-once logic)
-  private getJsondbBridge(): any {
-    return this.opts.jsondbBridge || (globalThis as any).__SOLID_PIPELINE_BRIDGE || (globalThis as any).solidJsondbBridge;
+  private getJsnqBridge(): any {
+    return this.opts.jsnqBridge || (globalThis as any).__SOLID_PIPELINE_BRIDGE || (globalThis as any).solidJsnqBridge;
   }
 
-  private warnOnceBridgeMissing(): void {
-    if (!(globalThis as any).__solidBridgeWarned) {
-      (globalThis as any).__solidBridgeWarned = true;
-      // eslint-disable-next-line no-console
-      console.warn('[SolidStore] mutate/pipe dispatched to missing bridge — register solid-pipeline-bridge.ts');
-    }
+  private requireJsnqBridge(operation: string): SolidJsnqBridge {
+    const bridge = this.getJsnqBridge();
+    if (bridge) return bridge;
+    throw new Error(
+      `[SolidStore] ${operation} requires the optional JSNQ bridge. ` +
+      `Import 'solidstore/jsnq' once or pass { jsnqBridge } to createSolidStore().`
+    );
   }
 
-  // Jsondb bridge dispatch (mutate/pipe) — exact future contract, no dupe of pipeline
+  // Jsnq bridge dispatch (mutate/pipe) — exact future contract, no dupe of pipeline
   mutate(path: string, ...ops: any[]): unknown {
     const p = path ?? '';
     const current = this.readStore(p);
@@ -446,12 +467,17 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     this.batch(() => {
       // Contract: applyPipelineMutation(ops, currentValue, { isRoot, path })
       // Bridge owns COW + stats; we only do the commit here.
-      const bridge = this.getJsondbBridge();
+      const bridge = ops.length > 0 ? this.requireJsnqBridge('mutate()') : this.getJsnqBridge();
       let bridgeApplied = false;
       if (bridge?.applyPipelineMutation) {
         // Opt-in fine-grained wake for sub-path branches (flat value-action shape only).
         if (this.opts.preciseMutationWake && p && bridge.applyPipelineMutationDetailed) {
-          const detailed = bridge.applyPipelineMutationDetailed(ops, current, { isRoot: false, path: p, bridgeErrorMode: this.opts.bridgeErrorMode });
+          const detailed = bridge.applyPipelineMutationDetailed(ops, current, {
+            isRoot: false,
+            path: p,
+            bridgeErrorMode: this.opts.bridgeErrorMode,
+            trackOperations: this.devActive,
+          });
           result = detailed.value;
           if (detailed.mutations && detailed.mutations.length > 0) {
             this.#commitPrecise(p, result, detailed.mutations);
@@ -461,11 +487,13 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
           if (hasMutationOps || result !== current) this.#commit(p, result);
           return;
         }
-        result = bridge.applyPipelineMutation(ops, current, { isRoot: !p, path: p, bridgeErrorMode: this.opts.bridgeErrorMode });
+        result = bridge.applyPipelineMutation(ops, current, {
+          isRoot: !p,
+          path: p,
+          bridgeErrorMode: this.opts.bridgeErrorMode,
+          trackOperations: this.devActive,
+        });
         bridgeApplied = true;
-      } else {
-        this.warnOnceBridgeMissing();
-        result = current;
       }
       if (bridgeApplied && (hasMutationOps || result !== current)) this.#commit(p, result);
     });
@@ -475,11 +503,12 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
   pipe(path: string, ...ops: any[]): any {
     const p = path ?? '';
     const current = this.readStore(p);
-    const bridge = this.getJsondbBridge();
+    const bridge = this.getJsnqBridge();
     if (bridge?.createPipeline) {
-      return bridge.createPipeline(current, ops, { path: p });
+      return bridge.createPipeline(current, ops, { path: p, trackOperations: this.devActive });
     }
-    // Minimal builder fallback (queries only; real ops in bridge)
+    if (ops.length > 0) this.requireJsnqBridge('pipe()');
+    // No-op builder is useful for reading an unfiltered branch without JSNQ.
     return {
       all: () => (Array.isArray(current) ? [...current] : current),
       first: () => (Array.isArray(current) ? current[0] : current),
@@ -487,16 +516,16 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     };
   }
 
-  // === opinia5: jsondb-powered reads — same where(...) DSL as mutate, for read + subscribe ===
+  // === opinia5: jsnq-powered reads — same where(...) DSL as mutate, for read + subscribe ===
 
-  /** One-shot snapshot query: runs the jsondb operators at `path`, returns matched values. */
+  /** One-shot snapshot query: runs the jsnq operators at `path`, returns matched values. */
   $query(path: string, ...ops: any[]): unknown[] {
-    return this.#runJsondbQuery(path ?? '', ops, 'all') as unknown[];
+    return this.#runJsnqQuery(path ?? '', ops, 'all') as unknown[];
   }
 
   /** One-shot snapshot query returning the first match (or null). */
   $queryOne(path: string, ...ops: any[]): unknown {
-    return this.#runJsondbQuery(path ?? '', ops, 'first');
+    return this.#runJsnqQuery(path ?? '', ops, 'first');
   }
 
   /** Reactive query: recomputes when the queried branch changes. Callable + subscribable. */
@@ -509,20 +538,20 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     return this.#createLiveQuery(path ?? '', ops, 'first');
   }
 
-  #runJsondbQuery(path: string, ops: any[], mode: 'all' | 'first'): unknown {
+  #runJsnqQuery(path: string, ops: any[], mode: 'all' | 'first'): unknown {
     const snapshot = this.readStore(path);
-    const bridge = this.getJsondbBridge();
+    const bridge = this.getJsnqBridge();
     if (bridge?.createPipeline && ops.length > 0) {
-      const wrapper = bridge.createPipeline(snapshot, ops, { path });
+      const wrapper = bridge.createPipeline(snapshot, ops, { path, trackOperations: this.devActive });
       if (mode === 'first') {
-        const node: any = wrapper.execute('first');
-        return node && typeof node === 'object' && 'data' in node ? node.data : (node ?? null);
+        return wrapper.execute('first') ?? null;
       }
       const nodes = wrapper.execute('all');
       return Array.isArray(nodes)
         ? nodes.map((n: any) => (n && typeof n === 'object' && 'data' in n ? n.data : n))
         : [];
     }
+    if (ops.length > 0) this.requireJsnqBridge(mode === 'first' ? '$queryOne()' : '$query()');
     // No operators (or no bridge): return the raw branch (array as-is / first element / value).
     if (mode === 'first') return Array.isArray(snapshot) ? (snapshot[0] ?? null) : (snapshot ?? null);
     if (Array.isArray(snapshot)) return [...snapshot];
@@ -559,7 +588,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     };
     const acc = createMemo(() => {
       this.#trackBranch(p);
-      return this.#runJsondbQuery(p, ops, mode);
+      return this.#runJsnqQuery(p, ops, mode);
     });
     const live = (() => acc()) as SolidLiveQuery<unknown>;
     live.subscribe = (cb: (value: unknown) => void, options?: ProjectionObservableOptions<unknown>) => {
@@ -607,14 +636,25 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     this.emitDevAction({ type: 'DEVTOOLS_ENABLED', payload: { storeName: this.name } });
   }
 
+  attachDevtools(devtools: SolidDevtoolsAdapter): void {
+    if (this.devService === devtools) return;
+    this.devService?.destroy();
+    this.devService = devtools;
+  }
+
   destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
     this.batch(() => {
       Object.keys(this.data ?? {}).forEach((k) => this.cleanupPath(k));
     });
-    registry.delete(this.name);
-    this.devActive = false;
+    if (registry.get(this.registryName) === this) registry.delete(this.registryName);
     this.emitDevAction({ type: 'STORE_DESTROYED', payload: { storeName: this.name } });
-    this.devService.destroy();
+    this.devActive = false;
+    this.reactivity?.destroy();
+    this.reactivity = undefined;
+    this.devService?.destroy();
+    this.devService = undefined;
   }
 
   /**
@@ -626,7 +666,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     if (!this.devActive) return;
     const metrics = this.reactivity?.getProxyMetrics?.();
     if (!metrics) return;
-    this.devService.emitProxyMetrics(this.name, metrics);
+    this.devService?.emitProxyMetrics(this.name, metrics);
   }
 
   returnStore(): SolidStoreProxy<T> { return this.store; }
@@ -677,6 +717,50 @@ export function useSolidStore<T extends Record<string, unknown> = any>(name = 'd
   const s = registry.get(name);
   if (!s) throw new Error(`[SolidStore] useSolidStore('${name}'): store not found. Create first.`);
   return s as SolidStore<T>;
+}
+
+export function waitForStore<T extends Record<string, unknown> = any>(
+  name = 'default',
+  options: WaitForStoreOptions = {}
+): Promise<SolidStore<T>> {
+  const existing = registry.get(name);
+  if (existing) return Promise.resolve(existing as SolidStore<T>);
+
+  const abortError = () => Object.assign(new Error(`[SolidStore] waitForStore('${name}') aborted.`), { name: 'AbortError' });
+  if (options.signal?.aborted) return Promise.reject(abortError());
+
+  return new Promise<SolidStore<T>>((resolve, reject) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onAbort = () => finishReject(abortError());
+    const waiters = registryWaiters.get(name) ?? new Set<StoreWaiter>();
+
+    const waiter: StoreWaiter = {
+      resolve: (store) => resolve(store as SolidStore<T>),
+      reject,
+      cleanup: () => {
+        if (timer !== undefined) clearTimeout(timer);
+        options.signal?.removeEventListener('abort', onAbort);
+      },
+    };
+
+    const finishReject = (error: Error) => {
+      waiters.delete(waiter);
+      if (waiters.size === 0) registryWaiters.delete(name);
+      waiter.cleanup();
+      waiter.reject(error);
+    };
+
+    waiters.add(waiter);
+    registryWaiters.set(name, waiters);
+    options.signal?.addEventListener('abort', onAbort, { once: true });
+    if (options.timeoutMs !== undefined) {
+      const timeoutMs = Math.max(0, options.timeoutMs);
+      timer = setTimeout(
+        () => finishReject(new Error(`[SolidStore] waitForStore('${name}') timed out after ${timeoutMs}ms.`)),
+        timeoutMs
+      );
+    }
+  });
 }
 
 // Headless / vanilla friendly (no owner required for creation + plain reads/writes/mutate).

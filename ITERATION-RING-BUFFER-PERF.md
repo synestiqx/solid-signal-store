@@ -18,7 +18,7 @@
 
 3. Small improvement in the demo UI side (onNewEntry) to consume the bounded snapshot.
 
-4. Added micro-benchmark at the end of `test/jsondb-benchmark.ts` (200k appends + periodic snapshots, simulating realistic log usage).
+4. Added micro-benchmark at the end of `test/jsnq-benchmark.ts` (200k appends + periodic snapshots, simulating realistic log usage).
 
 ## Measurement results (Bun, multiple runs)
 

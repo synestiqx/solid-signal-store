@@ -5,7 +5,7 @@
     "": {
       "name": "solidstore",
       "dependencies": {
-        "@synestiqx/jsondb": "file:../jsondb_git",
+        "@synestiqx/jsnq": "file:../jsnq_git",
       },
       "devDependencies": {
         "@playwright/test": "^1.60.0",
@@ -73,7 +73,7 @@
 
     "@playwright/test": ["@playwright/test@1.61.0", "", { "dependencies": { "playwright": "1.61.0" }, "bin": { "playwright": "cli.js" } }, "sha512-cKA5B6lpFEMyMGjxF54QihfYpB4FkEGH+qZhtArDEG+wezQAJY8Pq6C7T1SjWz+FFzt3TbyoXBQYk/0292TdJA=="],
 
-    "@synestiqx/jsondb": ["@synestiqx/jsondb@file:../jsondb_git", { "devDependencies": { "typescript": "^5.4.0" } }],
+    "@synestiqx/jsnq": ["@synestiqx/jsnq@file:../jsnq_git", { "devDependencies": { "typescript": "^5.4.0" } }],
 
     "csstype": ["csstype@3.2.3", "", {}, "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ=="],
 
