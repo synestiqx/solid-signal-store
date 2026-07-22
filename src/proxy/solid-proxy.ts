@@ -3,7 +3,7 @@
 import { createSignal, batch, type Accessor, type Setter } from 'solid-js';
 import { enumerateAncestors, getParentPath, isValidPath, normalizePath } from '../internal/path'; // delegates to SST (internal/path.ts) — all parent walks now reuse shared path core (max unification, zero naked path building)
 import { ARRAY_METHODS } from '../array/solid-array';
-import { createMutationResult, type JsonMutationResult } from '@synestiqx/jsnq/data-engine';
+import { createMutationResult, type JsonMutationResult } from 'jsnq/data-engine';
 import { createProjectionObservable, type ProjectionObservableOptions } from '../core/rx-interop';
 import type { SolidStoreReactivity } from '../core/proxy-types';
 

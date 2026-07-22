@@ -1,8 +1,8 @@
-import { createSolidStore } from 'solidstore';
-import 'solidstore/jsnq';
-import where from '@synestiqx/jsnq/operators/where';
-import update from '@synestiqx/jsnq/operators/update';
-import deleteKey from '@synestiqx/jsnq/operators/deleteKey';
+import { createSolidStore } from 'solid-signal-store';
+import 'solid-signal-store/jsnq';
+import where from 'jsnq/operators/where';
+import update from 'jsnq/operators/update';
+import deleteKey from 'jsnq/operators/deleteKey';
 
 type BenchResult = {
   name: string;

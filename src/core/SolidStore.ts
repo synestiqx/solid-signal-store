@@ -23,7 +23,7 @@ import {
   writeJsonPath,
   writeJsonPathValue,
   type JsonMutationResult,
-} from '@synestiqx/jsnq/data-engine';
+} from 'jsnq/data-engine';
 import { createProjectionObservable, type ProjectionObservableOptions } from './rx-interop';
 import {
   EMPTY_DEV_STREAM,
@@ -450,7 +450,7 @@ export class SolidStore<T extends Record<string, unknown> = Record<string, unkno
     if (bridge) return bridge;
     throw new Error(
       `[SolidStore] ${operation} requires the optional JSNQ bridge. ` +
-      `Import 'solidstore/jsnq' once or pass { jsnqBridge } to createSolidStore().`
+      `Import 'solid-signal-store/jsnq' once or pass { jsnqBridge } to createSolidStore().`
     );
   }
 

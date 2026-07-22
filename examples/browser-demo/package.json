@@ -1,5 +1,5 @@
 {
-  "name": "solidstore-browser-demo",
+  "name": "solid-signal-store-browser-demo",
   "private": true,
   "type": "module",
   "scripts": {

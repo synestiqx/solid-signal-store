@@ -7,7 +7,7 @@
  */
 import { type Accessor } from 'solid-js';
 import { type SolidWakeMode } from '../proxy/solid-proxy.js';
-import { type JsonMutationResult } from '@synestiqx/jsnq/data-engine';
+import { type JsonMutationResult } from 'jsnq/data-engine';
 import { type ProjectionObservableOptions } from './rx-interop.js';
 import { type DevStream, type SolidDevtoolsAdapter, type StoreDevToolsAction } from './devtools-contract.js';
 import type { SolidJsnqBridge } from '../jsnq/solid-pipeline-bridge.js';

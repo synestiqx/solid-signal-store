@@ -2,8 +2,8 @@ import { createMemo, createSignal, For, onCleanup, onMount, Show } from 'solid-j
 import { render } from 'solid-js/web';
 import { createSolidStore, onSolidDevAction, waitForStore } from 'solidstore';
 import 'solidstore/jsnq';
-import where from '@synestiqx/jsnq/operators/where';
-import update from '@synestiqx/jsnq/operators/update';
+import where from 'jsnq/operators/where';
+import update from 'jsnq/operators/update';
 
 type Tab = 'store' | 'design' | 'dashboard';
 type WakeMode = 'grained' | 'container';

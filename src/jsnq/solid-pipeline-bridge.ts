@@ -2,8 +2,8 @@
  * solid-pipeline-bridge.ts
  * Thin Solid integration layer under jsnq/.
  *
- * Reusable JSNQ logic is imported from @synestiqx/jsnq.
- * This bridge may differ; shared data-engine is exported through @synestiqx/jsnq/data-engine.
+ * Reusable JSNQ logic is imported from jsnq.
+ * This bridge may differ; shared data-engine is exported through jsnq/data-engine.
  *
  * Every reusable fast path now lives in the shared library
  * (synced/core/pipeline-fastpath.ts): the flat-array where+actions COW engine,
@@ -14,15 +14,15 @@
  * fallback that never throws into the reactive graph.
  */
 
-import { PipelineWrapper } from '@synestiqx/jsnq/core/pipeline-wrapper';
-import { cloneJsonData as cloneJson } from '@synestiqx/jsnq/core/data-engine';
+import { PipelineWrapper } from 'jsnq/core/pipeline-wrapper';
+import { cloneJsonData as cloneJson } from 'jsnq/core/data-engine';
 import {
   applyDeepSugarPatch,
   collectPipelineIntent,
   isDeepSugarAction,
   tryFastPipelineMutation,
   tryFastStructuralMutation,
-} from '@synestiqx/jsnq/core/pipeline-fastpath';
+} from 'jsnq/core/pipeline-fastpath';
 
 export interface SolidPipelineOptions {
   isRoot?: boolean;

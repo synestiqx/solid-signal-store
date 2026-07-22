@@ -1,8 +1,8 @@
 import { createEffect, createRoot } from 'solid-js';
 import { createSolidStore } from '../src';
 import '../src/jsnq';
-import where from '@synestiqx/jsnq/operators/where';
-import moveTo from '@synestiqx/jsnq/operators/moveTo';
+import where from 'jsnq/operators/where';
+import moveTo from 'jsnq/operators/moveTo';
 
 interface MenuNode {
   id: string;

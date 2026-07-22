@@ -16,11 +16,11 @@
  */
 
 import { applyPipelineMutation } from '../src/jsnq/solid-pipeline-bridge';
-import where from '@synestiqx/jsnq/operators/where';
-import update from '@synestiqx/jsnq/operators/update';
-import insert from '@synestiqx/jsnq/operators/insert';
-import deleteKey from '@synestiqx/jsnq/operators/deleteKey';
-import replace from '@synestiqx/jsnq/operators/replace';
+import where from 'jsnq/operators/where';
+import update from 'jsnq/operators/update';
+import insert from 'jsnq/operators/insert';
+import deleteKey from 'jsnq/operators/deleteKey';
+import replace from 'jsnq/operators/replace';
 
 type TestCase = {
   name: string;

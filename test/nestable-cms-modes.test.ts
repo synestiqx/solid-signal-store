@@ -1,9 +1,9 @@
 import { createEffect, createRoot } from 'solid-js';
 import { createSolidStore } from '../src';
 import '../src/jsnq';
-import where from '@synestiqx/jsnq/operators/where';
-import update from '@synestiqx/jsnq/operators/update';
-import moveToMatches from '@synestiqx/jsnq/operators/moveToMatches';
+import where from 'jsnq/operators/where';
+import update from 'jsnq/operators/update';
+import moveToMatches from 'jsnq/operators/moveToMatches';
 
 type NestableMode = 'jsnq' | 'direct' | 'native';
 type NestableMovePosition = 'before' | 'after' | 'child';
