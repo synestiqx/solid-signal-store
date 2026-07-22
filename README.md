@@ -10,7 +10,7 @@ npm install solid-js @adsq/jsnq @adsq/solid-signal-store
 bun add solid-js @adsq/jsnq @adsq/solid-signal-store
 ```
 
-Solid `>=1.8 <2` and `@adsq/jsnq` are peer dependencies, so the application supplies one framework runtime. The test matrix covers the minimum supported Solid line and current Solid 1.9. Built ESM and `.d.ts` files are committed, so the package can also be consumed straight from Git without building sources.
+Solid `>=1.8 <2` and `@adsq/jsnq` are peer dependencies, so the application supplies one framework runtime. The test matrix covers the minimum supported Solid line and current Solid 1.9.
 
 ## Create And Use A Store
 

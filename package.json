@@ -4,10 +4,10 @@
   "description": "Premium, minimal SolidJS port of the rich reactive store engine (full API parity, dramatically simpler reactivity)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/synestiqx/solidstore.git"
+    "url": "git+https://github.com/synestiqx/solid-signal-store.git"
   },
-  "homepage": "https://github.com/synestiqx/solidstore#readme",
-  "bugs": "https://github.com/synestiqx/solidstore/issues",
+  "homepage": "https://github.com/synestiqx/solid-signal-store#readme",
+  "bugs": "https://github.com/synestiqx/solid-signal-store/issues",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
