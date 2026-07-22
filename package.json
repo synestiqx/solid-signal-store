@@ -1,13 +1,13 @@
 {
   "name": "@adsq/solid-signal-store",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Premium, minimal SolidJS port of the rich reactive store engine (full API parity, dramatically simpler reactivity)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/synestiqx/solid-signal-store.git"
+    "url": "git+https://github.com/adsqx/solid-signal-store.git"
   },
-  "homepage": "https://github.com/synestiqx/solid-signal-store#readme",
-  "bugs": "https://github.com/synestiqx/solid-signal-store/issues",
+  "homepage": "https://github.com/adsqx/solid-signal-store#readme",
+  "bugs": "https://github.com/adsqx/solid-signal-store/issues",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
